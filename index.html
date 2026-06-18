@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conan Gray Bot Dashboard</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="aurora aurora-one"></div>
+    <div class="aurora aurora-two"></div>
+
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">CG</div>
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h1>Conan Gray Bot</h1>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Dashboard sections">
+          <button class="nav-item active" data-page="overview">Overview</button>
+          <button class="nav-item" data-page="ai">AI</button>
+          <button class="nav-item" data-page="triggers">Triggers</button>
+          <button class="nav-item" data-page="commands">Commands</button>
+          <button class="nav-item" data-page="games">Games</button>
+          <button class="nav-item" data-page="logs">Logs</button>
+        </nav>
+
+        <div class="side-card">
+          <span class="status-dot" id="side-status-dot"></span>
+          <div>
+            <strong id="side-status">Checking...</strong>
+            <small id="side-latency">Waiting for API</small>
+          </div>
+        </div>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Soft-pop chaos control room</p>
+            <h2 id="page-title">Overview</h2>
+          </div>
+          <div class="top-actions">
+            <button class="ghost" id="refresh-btn">Refresh</button>
+            <button class="primary" id="save-btn">Save changes</button>
+          </div>
+        </header>
+
+        <section class="lock-card" id="lock-card">
+          <div>
+            <p class="eyebrow">Connect dashboard</p>
+            <h2>Unlock the dashboard</h2>
+            <p class="muted">
+              Paste the backend URL and dashboard key configured in Discloud. The key is stored only in this browser.
+            </p>
+          </div>
+          <label>
+            Backend API URL
+            <input id="api-base-input" placeholder="https://your-discloud-app.discloud.app" />
+          </label>
+          <label>
+            Dashboard key
+            <input id="dashboard-key-input" type="password" placeholder="••••••••" />
+          </label>
+          <label>
+            Guild ID
+            <input id="guild-id-input" placeholder="1513331636362809466" />
+          </label>
+          <button class="primary wide" id="connect-btn">Connect</button>
+        </section>
+
+        <div id="toast" class="toast" role="status"></div>
+
+        <div class="pages" id="pages" hidden>
+          <section class="page active" data-page-panel="overview">
+            <div class="hero-card">
+              <div>
+                <p class="eyebrow">Current mood</p>
+                <h3>Dashboard running, drama contained.</h3>
+                <p class="muted">Configure AI memory, trigger media, commands, games, and status from one place.</p>
+              </div>
+              <div class="hero-pill" id="bot-ready-pill">Bot status unknown</div>
+            </div>
+
+            <div class="grid metrics">
+              <article class="card metric">
+                <span>Bot</span>
+                <strong id="metric-bot">—</strong>
+                <small id="metric-user">Waiting</small>
+              </article>
+              <article class="card metric">
+                <span>Latency</span>
+                <strong id="metric-latency">—</strong>
+                <small>Discord websocket</small>
+              </article>
+              <article class="card metric">
+                <span>AI providers</span>
+                <strong id="metric-providers">—</strong>
+                <small>Gemini → OpenRouter → Groq</small>
+              </article>
+            </div>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Quick setup</p>
+                  <h3>Important IDs</h3>
+                </div>
+              </div>
+              <div class="form-grid">
+                <label>
+                  AI channel ID
+                  <input data-bind="ai.channelId" placeholder="Channel ID" />
+                </label>
+                <label>
+                  Allowed category ID
+                  <input data-bind="games.allowedCategoryId" placeholder="Category ID" />
+                </label>
+                <label>
+                  Accent color
+                  <input data-bind="appearance.accentColor" placeholder="#f7b7c8" />
+                </label>
+              </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="ai">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Shared memory</p>
+                  <h3>AI channel behavior</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="ai.enabled" />
+                  <span></span>
+                </label>
+              </div>
+              <p class="muted">
+                In the configured AI channel, @mentioning the bot starts/continues one shared memory session for everyone in that channel.
+              </p>
+              <div class="form-grid">
+                <label>
+                  AI channel
+                  <select data-bind="ai.channelId" data-channel-select="text"></select>
+                </label>
+                <label>
+                  Max history messages
+                  <input type="number" min="4" max="40" data-bind="ai.maxHistoryMessages" />
+                </label>
+                <label>
+                  Max output tokens
+                  <input type="number" min="120" max="1600" data-bind="ai.maxOutputTokens" />
+                </label>
+              </div>
+              <label>
+                Personality prompt
+                <textarea data-bind="ai.personality" rows="8"></textarea>
+              </label>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Fallback order</p>
+                  <h3>AI providers</h3>
+                </div>
+              </div>
+              <div class="provider-list" id="provider-list"></div>
+              <p class="hint">Default: Gemini first, then OpenRouter, then Groq. Change the comma-separated order if needed.</p>
+              <input data-bind="ai.providerOrder" data-array placeholder="gemini, openrouter, groq" />
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="triggers">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Media displayers</p>
+                  <h3>Trigger words</h3>
+                </div>
+                <button class="ghost" id="add-trigger-btn">Add trigger</button>
+              </div>
+              <div id="triggers-list" class="stack"></div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="commands">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Slash commands</p>
+                  <h3>Enable or disable commands</h3>
+                </div>
+                <button class="ghost" id="sync-commands-btn">Sync commands</button>
+              </div>
+              <div class="command-grid" id="commands-grid"></div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="games">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Little games</p>
+                  <h3>Tic-tac-toe and allowed category</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.ticTacToeEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Games/media category
+                  <select data-bind="games.allowedCategoryId" data-category-select></select>
+                </label>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Embeds</p>
+                  <h3>Appearance</h3>
+                </div>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Accent color
+                  <input data-bind="appearance.accentColor" />
+                </label>
+                <label>
+                  Footer text
+                  <input data-bind="appearance.embedFooter" />
+                </label>
+              </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="logs">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Recent events</p>
+                  <h3>Logs</h3>
+                </div>
+              </div>
+              <div id="logs-list" class="logs"></div>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
+
