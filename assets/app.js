@@ -1,4 +1,5 @@
 const DEFAULT_GUILD_ID = "1513331636362809466";
+const PUBLIC_CONFIG = window.CONAN_DASHBOARD_CONFIG || {};
 const STORAGE = {
   apiBase: "conan-dashboard-api-base",
   key: "conan-dashboard-key",
@@ -6,9 +7,9 @@ const STORAGE = {
 };
 
 let state = {
-  apiBase: localStorage.getItem(STORAGE.apiBase) || window.location.origin,
-  key: localStorage.getItem(STORAGE.key) || "",
-  guildId: localStorage.getItem(STORAGE.guildId) || DEFAULT_GUILD_ID,
+  apiBase: localStorage.getItem(STORAGE.apiBase) || PUBLIC_CONFIG.apiBase || window.location.origin,
+  key: localStorage.getItem(STORAGE.key) || PUBLIC_CONFIG.dashboardKey || "",
+  guildId: localStorage.getItem(STORAGE.guildId) || PUBLIC_CONFIG.guildId || DEFAULT_GUILD_ID,
   config: null,
   health: null,
   channels: [],
@@ -325,4 +326,3 @@ function init() {
 }
 
 init();
-
