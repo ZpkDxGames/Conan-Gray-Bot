@@ -30,7 +30,7 @@ function toast(message) {
 }
 
 function api(path, options = {}) {
-  const base = state.apiBase.replace(/\/$/, "");
+  const base = normalizeApiBase(state.apiBase);
   return fetch(`${base}${path}`, {
     ...options,
     headers: {
@@ -76,7 +76,7 @@ function setConnected(connected) {
 }
 
 async function connect() {
-  state.apiBase = $("#api-base-input").value.trim() || window.location.origin;
+  state.apiBase = normalizeApiBase($("#api-base-input").value.trim() || window.location.origin);
   state.key = $("#dashboard-key-input").value;
   state.guildId = $("#guild-id-input").value.trim() || DEFAULT_GUILD_ID;
   localStorage.setItem(STORAGE.apiBase, state.apiBase);
@@ -103,6 +103,7 @@ async function refreshAll() {
 
     state.health = health;
     state.config = configData.config;
+    normalizeConfigTheme();
     state.channels = discordData.channels || [];
     state.categories = discordData.categories || [];
 
@@ -123,6 +124,7 @@ async function refreshAll() {
 function renderHealth() {
   const bot = state.health?.bot || {};
   const providers = state.health?.providers || {};
+  const commandSync = bot.commandSync || {};
   const status = bot.status || (bot.ready ? "online" : bot.user ? "connecting" : "offline");
   const ready = status === "online";
   const connecting = ["starting", "connecting"].includes(status);
@@ -137,6 +139,10 @@ function renderHealth() {
   $("#metric-bot").textContent = statusLabel;
   $("#metric-user").textContent = bot.user || "Not logged in";
   $("#metric-latency").textContent = bot.latencyMs ? `${bot.latencyMs}ms` : "—";
+  $("#metric-sync").textContent = syncText(commandSync.status);
+  $("#metric-sync-detail").textContent = commandSync.error || "Slash commands";
+  $("#metric-api").textContent = apiHost();
+  $("#metric-api-detail").textContent = normalizeApiBase(state.apiBase);
   $("#metric-providers").textContent = Object.entries(providers)
     .filter(([, enabled]) => enabled)
     .map(([name]) => name)
@@ -158,6 +164,41 @@ function statusText(status) {
     not_configured: "Bot not configured",
     offline: "Bot offline",
   }[status] || "Bot unknown";
+}
+
+function syncText(status) {
+  return {
+    ok: "Synced",
+    pending: "Pending",
+    forbidden: "Missing access",
+    failed: "Failed",
+    not_started: "Not started",
+    not_configured: "Not configured",
+  }[status] || "Unknown";
+}
+
+function apiHost() {
+  try {
+    return new URL(normalizeApiBase(state.apiBase)).host;
+  } catch {
+    return state.apiBase || "Not set";
+  }
+}
+
+function normalizeApiBase(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, "");
+}
+
+function normalizeConfigTheme() {
+  state.config.appearance ??= {};
+  const current = String(state.config.appearance.accentColor || "").toLowerCase();
+  const oldAccents = ["", "#f7b7c8", "#b9a7ff", "f7b7c8", "b9a7ff"];
+  if (oldAccents.includes(current)) {
+    state.config.appearance.accentColor = "#67e8f9";
+  }
 }
 
 function renderChannelSelectors() {
@@ -355,6 +396,7 @@ function escapeHtml(value) {
 }
 
 function init() {
+  state.apiBase = normalizeApiBase(state.apiBase);
   $("#api-base-input").value = state.apiBase;
   $("#dashboard-key-input").value = state.key;
   $("#guild-id-input").value = state.guildId;
