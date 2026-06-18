@@ -14,6 +14,8 @@ let state = {
   health: null,
   channels: [],
   categories: [],
+  connected: false,
+  refreshing: false,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -66,8 +68,11 @@ function showPage(name) {
 }
 
 function setConnected(connected) {
+  state.connected = connected;
+  document.body.classList.toggle("is-connected", connected);
   $("#lock-card").hidden = connected;
   $("#pages").hidden = !connected;
+  $("#save-btn").disabled = !connected;
 }
 
 async function connect() {
@@ -83,42 +88,76 @@ async function connect() {
 }
 
 async function refreshAll() {
-  const [health, configData, discordData, logsData] = await Promise.all([
-    api("/api/health"),
-    api(`/api/config/${state.guildId}`),
-    api(`/api/discord/${state.guildId}/channels`).catch(() => ({ channels: [], categories: [] })),
-    api(`/api/logs/${state.guildId}`).catch(() => ({ logs: [] })),
-  ]);
+  if (state.refreshing) return;
+  state.refreshing = true;
+  $("#refresh-btn").disabled = true;
+  $("#refresh-btn").textContent = "Refreshing...";
 
-  state.health = health;
-  state.config = configData.config;
-  state.channels = discordData.channels || [];
-  state.categories = discordData.categories || [];
+  try {
+    const [health, configData, discordData, logsData] = await Promise.all([
+      api("/api/health"),
+      api(`/api/config/${state.guildId}`),
+      api(`/api/discord/${state.guildId}/channels`).catch(() => ({ channels: [], categories: [], botReady: false })),
+      api(`/api/logs/${state.guildId}`).catch(() => ({ logs: [] })),
+    ]);
 
-  renderHealth();
-  renderChannelSelectors();
-  bindConfigToInputs();
-  renderProviders();
-  renderCommands();
-  renderTriggers();
-  renderLogs(logsData.logs || []);
+    state.health = health;
+    state.config = configData.config;
+    state.channels = discordData.channels || [];
+    state.categories = discordData.categories || [];
+
+    renderHealth();
+    renderChannelSelectors();
+    bindConfigToInputs();
+    renderProviders();
+    renderCommands();
+    renderTriggers();
+    renderLogs(logsData.logs || []);
+  } finally {
+    state.refreshing = false;
+    $("#refresh-btn").disabled = false;
+    $("#refresh-btn").textContent = "Refresh";
+  }
 }
 
 function renderHealth() {
   const bot = state.health?.bot || {};
   const providers = state.health?.providers || {};
-  const ready = Boolean(bot.ready);
+  const status = bot.status || (bot.ready ? "online" : bot.user ? "connecting" : "offline");
+  const ready = status === "online";
+  const connecting = ["starting", "connecting"].includes(status);
+  const crashed = ["crashed", "closed", "stopped"].includes(status);
+  const statusLabel = statusText(status);
+
   $("#side-status-dot").classList.toggle("ok", ready);
-  $("#side-status").textContent = ready ? "Bot online" : "Bot offline";
-  $("#side-latency").textContent = bot.latencyMs ? `${bot.latencyMs}ms latency` : "No websocket yet";
-  $("#metric-bot").textContent = ready ? "Online" : "Offline";
+  $("#side-status-dot").classList.toggle("warn", connecting);
+  $("#side-status-dot").classList.toggle("bad", crashed);
+  $("#side-status").textContent = statusLabel;
+  $("#side-latency").textContent = bot.error || (bot.latencyMs ? `${bot.latencyMs}ms latency` : bot.user || "Waiting for websocket");
+  $("#metric-bot").textContent = statusLabel;
   $("#metric-user").textContent = bot.user || "Not logged in";
   $("#metric-latency").textContent = bot.latencyMs ? `${bot.latencyMs}ms` : "—";
   $("#metric-providers").textContent = Object.entries(providers)
     .filter(([, enabled]) => enabled)
     .map(([name]) => name)
     .join(", ") || "None";
-  $("#bot-ready-pill").textContent = ready ? "Bot websocket ready" : "Waiting for bot";
+  $("#bot-ready-pill").textContent = ready ? "Bot websocket ready" : connecting ? "Bot is connecting..." : "Bot needs attention";
+  $("#bot-ready-pill").classList.toggle("ok", ready);
+  $("#bot-ready-pill").classList.toggle("warn", connecting);
+  $("#bot-ready-pill").classList.toggle("bad", crashed);
+}
+
+function statusText(status) {
+  return {
+    online: "Bot online",
+    connecting: "Bot connecting",
+    starting: "Bot starting",
+    crashed: "Bot crashed",
+    closed: "Bot closed",
+    stopped: "Bot stopped",
+    not_configured: "Bot not configured",
+    offline: "Bot offline",
+  }[status] || "Bot unknown";
 }
 
 function renderChannelSelectors() {
@@ -273,6 +312,10 @@ function renderLogs(logs) {
 }
 
 async function saveConfig() {
+  if (!state.config) {
+    toast("Connect the dashboard first.");
+    return;
+  }
   await api(`/api/config/${state.guildId}`, {
     method: "PUT",
     body: JSON.stringify({ config: state.config }),
@@ -282,6 +325,10 @@ async function saveConfig() {
 }
 
 function addTrigger() {
+  if (!state.config) {
+    toast("Connect the dashboard first.");
+    return;
+  }
   state.config.triggers ??= [];
   state.config.triggers.push({
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -318,10 +365,15 @@ function init() {
   $("#sync-commands-btn").onclick = () => syncCommands().catch((error) => toast(error.message));
   $$(".nav-item").forEach((button) => (button.onclick = () => showPage(button.dataset.page)));
 
-  if (state.key) {
+  setConnected(false);
+
+  if (state.key && state.apiBase) {
     refreshAll()
       .then(() => setConnected(true))
-      .catch(() => setConnected(false));
+      .catch((error) => {
+        setConnected(false);
+        toast(`Could not connect: ${error.message}`);
+      });
   }
 }
 
