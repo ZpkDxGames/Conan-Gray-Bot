@@ -18,8 +18,10 @@
   --inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.075);
   --radius-xl: 1.55rem;
   --radius-lg: 1.15rem;
-  --gap: 1rem;
-  --pad: 1rem;
+  --gap: 1.05rem;
+  --pad: 1.05rem;
+  --rail: 68rem;
+  --sidebar-w: clamp(16rem, 20vw, 18rem);
 }
 
 * {
@@ -81,12 +83,12 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: clamp(15rem, 21vw, 18rem) minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   gap: var(--gap);
-  width: min(1480px, calc(100% - 1.25rem));
+  width: min(1480px, calc(100% - 1.5rem));
   height: 100svh;
   margin: 0 auto;
-  padding: 0.625rem 0;
+  padding: 0.75rem 0;
 }
 
 .sidebar,
@@ -108,7 +110,7 @@ button {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: var(--gap);
   padding: var(--pad);
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -277,11 +279,14 @@ small {
 
 .content {
   position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: var(--gap);
   min-width: 0;
   min-height: 0;
   height: 100%;
   overflow: auto;
-  padding: var(--pad);
+  padding: 0;
   border-radius: var(--radius-xl);
   scrollbar-width: thin;
   scrollbar-color: rgba(247, 183, 200, 0.42) transparent;
@@ -295,8 +300,9 @@ small {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin: calc(var(--pad) * -1) calc(var(--pad) * -1) 1rem;
-  padding: 1rem 1rem 0.95rem;
+  width: 100%;
+  margin: 0;
+  padding: 1.05rem var(--pad);
   border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);
   background: linear-gradient(180deg, rgba(7, 16, 23, 0.96), rgba(7, 16, 23, 0.76));
   backdrop-filter: blur(18px);
@@ -352,20 +358,26 @@ small {
 .lock-card {
   display: grid;
   gap: 0.95rem;
-  width: min(100%, 43rem);
+  justify-self: center;
+  align-self: start;
+  width: min(calc(100% - (var(--pad) * 2)), 43rem);
   padding: 1.2rem;
-  margin: 0.2rem 0 0;
+  margin: 0 auto;
 }
 
 .pages {
   display: grid;
   gap: var(--gap);
+  justify-self: center;
+  align-self: start;
+  width: min(calc(100% - (var(--pad) * 2)), var(--rail));
   min-width: 0;
 }
 
 .page {
   display: none;
   gap: var(--gap);
+  width: 100%;
 }
 
 .page.active {
@@ -418,6 +430,7 @@ small {
 
 .metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .card {
@@ -464,6 +477,15 @@ small {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.85rem;
+}
+
+.content > .lock-card,
+.content > .pages {
+  margin-top: 0;
+}
+
+.content > .lock-card {
+  transform: translateY(0);
 }
 
 label {
@@ -626,7 +648,7 @@ select:focus {
     grid-template-columns: 1fr;
     height: auto;
     min-height: 100svh;
-    padding: 0.625rem 0;
+    padding: 0.75rem 0;
   }
 
   .sidebar {
@@ -638,6 +660,7 @@ select:focus {
   .content {
     height: auto;
     overflow: visible;
+    min-height: min(60rem, calc(100svh - 1.5rem));
   }
 
   .nav {
@@ -663,6 +686,7 @@ select:focus {
   :root {
     --gap: 0.75rem;
     --pad: 0.75rem;
+    --rail: 100%;
   }
 
   .app-shell {
@@ -676,11 +700,11 @@ select:focus {
   }
 
   .content {
-    padding: 0.75rem;
+    padding: 0;
   }
 
   .topbar {
-    margin: calc(var(--pad) * -1) calc(var(--pad) * -1) 0.75rem;
+    margin: 0;
     padding: 0.85rem;
     border-radius: 1.35rem 1.35rem 1rem 1rem;
   }
