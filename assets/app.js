@@ -29,7 +29,7 @@ function toast(message) {
   toast._timer = setTimeout(() => el.classList.remove("show"), 2800);
 }
 
-function api(path, options = {}) {
+function api(path, options = {}, didRetry = false) {
   const base = normalizeApiBase(state.apiBase);
   return fetch(`${base}${path}`, {
     ...options,
@@ -44,6 +44,23 @@ function api(path, options = {}) {
       throw new Error(data.detail || `HTTP ${response.status}`);
     }
     return data;
+  }).catch((error) => {
+    if (!didRetry && shouldRecoverApiBase(error)) {
+      const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
+      state.apiBase = fallback;
+      localStorage.setItem(STORAGE.apiBase, fallback);
+      const input = $("#api-base-input");
+      if (input) input.value = fallback;
+      return api(path, options, true);
+    }
+
+    if (error instanceof TypeError && /fetch/i.test(error.message)) {
+      throw new Error(
+        `Failed to fetch ${base}${path}. Check if the Discloud API is online and accepting CORS from this dashboard.`
+      );
+    }
+
+    throw error;
   });
 }
 
@@ -190,6 +207,23 @@ function normalizeApiBase(value) {
     .trim()
     .replace(/\/+$/, "")
     .replace(/\/api$/i, "");
+}
+
+function shouldRecoverApiBase(error) {
+  const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
+  const current = normalizeApiBase(state.apiBase);
+  if (!fallback || current === fallback) return false;
+  if (error instanceof TypeError && /fetch/i.test(error.message)) return true;
+  return isLocalOrDashboardHost(current);
+}
+
+function isLocalOrDashboardHost(value) {
+  try {
+    const host = new URL(value).host;
+    return host === window.location.host || host === "localhost:8080" || host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  } catch {
+    return false;
+  }
 }
 
 function normalizeConfigTheme() {
@@ -397,6 +431,11 @@ function escapeHtml(value) {
 
 function init() {
   state.apiBase = normalizeApiBase(state.apiBase);
+  const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
+  if (fallback && isLocalOrDashboardHost(state.apiBase)) {
+    state.apiBase = fallback;
+    localStorage.setItem(STORAGE.apiBase, fallback);
+  }
   $("#api-base-input").value = state.apiBase;
   $("#dashboard-key-input").value = state.key;
   $("#guild-id-input").value = state.guildId;
