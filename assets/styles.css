@@ -223,6 +223,24 @@ small {
   text-align: left;
 }
 
+.nav-sub {
+  min-height: 2.25rem;
+  margin-left: 0.75rem;
+  padding: 0.52rem 0.75rem;
+  font-size: 0.9rem;
+  opacity: 0.86;
+}
+
+.nav-sub::after {
+  content: "";
+  position: absolute;
+  left: -0.34rem;
+  top: 50%;
+  width: 0.34rem;
+  height: 1px;
+  background: var(--line-strong);
+}
+
 .nav-item:hover,
 .nav-item.active {
   background: linear-gradient(90deg, rgba(103, 232, 249, 0.18), rgba(56, 189, 248, 0.06));
@@ -426,6 +444,43 @@ small {
 .grid {
   display: grid;
   gap: var(--gap);
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.game-card {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 7.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at top right, rgba(103, 232, 249, 0.13), transparent 12rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    var(--surface);
+  color: var(--text);
+  padding: 1rem;
+  text-align: left;
+  box-shadow: var(--inner-glow);
+}
+
+.game-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+.game-card span {
+  color: var(--accent-3);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.game-card small {
+  line-height: 1.35;
 }
 
 .metrics {
@@ -830,7 +885,8 @@ select:focus {
 
   .metrics,
   .form-grid,
-  .trigger-row {
+  .trigger-row,
+  .game-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -879,7 +935,8 @@ select:focus {
 
   .metrics,
   .form-grid,
-  .trigger-row {
+  .trigger-row,
+  .game-grid {
     grid-template-columns: 1fr;
   }
 

@@ -89,7 +89,24 @@ function setPath(object, path, value) {
 function showPage(name) {
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.page === name));
   $$(".page").forEach((page) => page.classList.toggle("active", page.dataset.pagePanel === name));
-  $("#page-title").textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  $("#page-title").textContent = pageTitle(name);
+}
+
+function pageTitle(name) {
+  return {
+    overview: "Overview",
+    ai: "AI",
+    triggers: "Triggers",
+    commands: "Commands",
+    games: "Games",
+    "game-tictactoe": "Tic-tac-toe",
+    "game-coinflip": "Coinflip",
+    "game-eightball": "8-ball",
+    "game-rps": "Rock Paper Scissors",
+    "game-guesssong": "Guess the Song",
+    "game-wyr": "Would You Rather",
+    logs: "Logs",
+  }[name] || name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 function setConnected(connected) {
@@ -303,6 +320,8 @@ function bindConfigToInputs() {
     const value = getPath(state.config, input.dataset.bind);
     if (input.type === "checkbox") {
       input.checked = Boolean(value);
+    } else if (input.dataset.lines !== undefined) {
+      input.value = Array.isArray(value) ? value.join("\n") : value || "";
     } else if (input.dataset.array !== undefined) {
       input.value = Array.isArray(value) ? value.join(", ") : value || "";
     } else {
@@ -315,6 +334,8 @@ function bindConfigToInputs() {
         nextValue = input.checked;
       } else if (input.type === "number") {
         nextValue = Number(input.value);
+      } else if (input.dataset.lines !== undefined) {
+        nextValue = input.value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
       } else if (input.dataset.array !== undefined) {
         nextValue = input.value.split(",").map((item) => item.trim()).filter(Boolean);
       } else {
@@ -564,6 +585,7 @@ function init() {
     else toast("Connect the dashboard first.");
   };
   $$(".nav-item").forEach((button) => (button.onclick = () => showPage(button.dataset.page)));
+  $$("[data-page-link]").forEach((button) => (button.onclick = () => showPage(button.dataset.pageLink)));
 
   setConnected(false);
 

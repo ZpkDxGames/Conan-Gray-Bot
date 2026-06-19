@@ -32,6 +32,12 @@
           <button class="nav-item" data-page="triggers">Triggers</button>
           <button class="nav-item" data-page="commands">Commands</button>
           <button class="nav-item" data-page="games">Games</button>
+          <button class="nav-item nav-sub" data-page="game-tictactoe">Tic-tac-toe</button>
+          <button class="nav-item nav-sub" data-page="game-coinflip">Coinflip</button>
+          <button class="nav-item nav-sub" data-page="game-eightball">8-ball</button>
+          <button class="nav-item nav-sub" data-page="game-rps">Rock Paper Scissors</button>
+          <button class="nav-item nav-sub" data-page="game-guesssong">Guess Song</button>
+          <button class="nav-item nav-sub" data-page="game-wyr">Would You Rather</button>
           <button class="nav-item" data-page="logs">Logs</button>
         </nav>
 
@@ -253,13 +259,9 @@
             <article class="card">
               <div class="card-head">
                 <div>
-                  <p class="eyebrow">Little games</p>
-                  <h3>Tic-tac-toe and allowed category</h3>
+                  <p class="eyebrow">Game hub</p>
+                  <h3>Global game settings</h3>
                 </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.ticTacToeEnabled" />
-                  <span></span>
-                </label>
               </div>
               <div class="form-grid">
                 <label>
@@ -270,50 +272,35 @@
                   Max active games/channel
                   <input type="number" min="1" max="10" data-bind="games.maxActiveGamesPerChannel" />
                 </label>
-                <label class="inline-toggle">
-                  Tic-tac-toe
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.ticTacToeEnabled" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Coinflip
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.coinflipEnabled" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  8-ball
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.eightballEnabled" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Rock paper scissors
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.rpsEnabled" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Guess the song
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.guessSongEnabled" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Would you rather
-                  <span class="switch">
-                    <input type="checkbox" data-bind="games.wouldYouRatherEnabled" />
-                    <span></span>
-                  </span>
-                </label>
               </div>
             </article>
+
+            <div class="game-grid">
+              <button class="game-card" type="button" data-page-link="game-tictactoe">
+                <span>Tic-tac-toe</span>
+                <small>Board behavior, bot opponent, win/draw messages.</small>
+              </button>
+              <button class="game-card" type="button" data-page-link="game-coinflip">
+                <span>Coinflip</span>
+                <small>Labels and result message.</small>
+              </button>
+              <button class="game-card" type="button" data-page-link="game-eightball">
+                <span>8-ball</span>
+                <small>Custom answer pool.</small>
+              </button>
+              <button class="game-card" type="button" data-page-link="game-rps">
+                <span>Rock Paper Scissors</span>
+                <small>Win/lose/draw responses.</small>
+              </button>
+              <button class="game-card" type="button" data-page-link="game-guesssong">
+                <span>Guess the Song</span>
+                <small>Prompt and hint list.</small>
+              </button>
+              <button class="game-card" type="button" data-page-link="game-wyr">
+                <span>Would You Rather</span>
+                <small>Question pool and enable state.</small>
+              </button>
+            </div>
 
             <article class="card">
               <div class="card-head">
@@ -332,6 +319,157 @@
                   <input data-bind="appearance.embedFooter" />
                 </label>
               </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-tictactoe">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>Tic-tac-toe</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.ticTacToeEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label class="inline-toggle">
+                  Allow bot opponent
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.ticTacToeAllowBotOpponent" />
+                    <span></span>
+                  </span>
+                </label>
+                <label>
+                  Win message
+                  <input data-bind="games.ticTacToeWinMessage" placeholder="{winner} won. The drama has concluded." />
+                </label>
+                <label>
+                  Draw message
+                  <input data-bind="games.ticTacToeDrawMessage" placeholder="Tic-tac-toe ended in a draw." />
+                </label>
+              </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-coinflip">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>Coinflip</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.coinflipEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Heads label
+                  <input data-bind="games.coinflipHeadsLabel" placeholder="Heads" />
+                </label>
+                <label>
+                  Tails label
+                  <input data-bind="games.coinflipTailsLabel" placeholder="Tails" />
+                </label>
+                <label>
+                  Result message
+                  <input data-bind="games.coinflipMessage" placeholder="The universe made a tiny decision." />
+                </label>
+              </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-eightball">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>8-ball</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.eightballEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <label>
+                Answer pool
+                <textarea data-bind="games.eightballAnswers" data-lines rows="8" placeholder="One answer per line"></textarea>
+              </label>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-rps">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>Rock Paper Scissors</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.rpsEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Win message
+                  <input data-bind="games.rpsWinMessage" />
+                </label>
+                <label>
+                  Lose message
+                  <input data-bind="games.rpsLoseMessage" />
+                </label>
+                <label>
+                  Draw message
+                  <input data-bind="games.rpsDrawMessage" />
+                </label>
+              </div>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-guesssong">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>Guess the Song</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.guessSongEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <label>
+                Prompt
+                <input data-bind="games.guessSongPrompt" />
+              </label>
+              <label>
+                Hint pool
+                <textarea data-bind="games.guessSongHints" data-lines rows="8" placeholder="One hint per line"></textarea>
+              </label>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="game-wyr">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Game config</p>
+                  <h3>Would You Rather</h3>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-bind="games.wouldYouRatherEnabled" />
+                  <span></span>
+                </label>
+              </div>
+              <label>
+                Question pool
+                <textarea data-bind="games.wouldYouRatherQuestions" data-lines rows="8" placeholder="One question per line"></textarea>
+              </label>
             </article>
           </section>
 
