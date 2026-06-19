@@ -489,6 +489,7 @@ small {
 }
 
 label {
+  position: relative;
   display: grid;
   gap: 0.4rem;
   color: var(--muted);
@@ -509,6 +510,122 @@ select {
   padding: 0.78rem 0.9rem;
 }
 
+select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.65rem;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%) calc(100% - 1.25rem) 50% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, rgba(103, 232, 249, 0.08), rgba(2, 9, 14, 0.46)),
+    rgba(2, 9, 14, 0.72);
+}
+
+select:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 0.18rem rgba(103, 232, 249, 0.08);
+}
+
+select option {
+  background: #071017;
+  color: var(--text);
+}
+
+select option:checked {
+  background: #123044;
+  color: var(--accent-3);
+}
+
+.native-select-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.select-ui {
+  position: relative;
+  z-index: 2;
+}
+
+.select-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgba(103, 232, 249, 0.08), rgba(2, 9, 14, 0.46)),
+    rgba(2, 9, 14, 0.72);
+  color: var(--text);
+  padding: 0.78rem 0.9rem;
+  text-align: left;
+}
+
+.select-button::after {
+  content: "⌄";
+  color: var(--accent);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.select-button.placeholder {
+  color: var(--muted);
+}
+
+.select-ui.open .select-button {
+  border-color: rgba(103, 232, 249, 0.68);
+  box-shadow: 0 0 0 0.25rem rgba(103, 232, 249, 0.12);
+}
+
+.select-ui.open .select-button::after {
+  transform: rotate(180deg);
+}
+
+.select-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: none;
+  max-height: 15rem;
+  overflow: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(103, 232, 249, 0.12), transparent 12rem),
+    rgba(5, 14, 21, 0.98);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+}
+
+.select-ui.open .select-menu {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.select-option {
+  width: 100%;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+}
+
+.select-option:hover,
+.select-option.active {
+  background: rgba(103, 232, 249, 0.14);
+  color: var(--text);
+}
+
 textarea {
   resize: vertical;
 }
@@ -524,6 +641,20 @@ select:focus {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.inline-toggle {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 2.9rem;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(2, 9, 14, 0.28);
+}
+
+.inline-toggle > .switch {
+  justify-self: end;
 }
 
 .switch input {
@@ -574,11 +705,37 @@ select:focus {
 
 .command-toggle,
 .trigger-row,
-.log-row {
+.log-row,
+.notice {
   border: 1px solid var(--line);
   border-radius: 1.1rem;
   background: rgba(2, 9, 14, 0.32);
   padding: 0.8rem;
+}
+
+.notice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem 0.85rem;
+  align-items: center;
+  margin-bottom: 0.9rem;
+  border-color: rgba(251, 191, 36, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.12), transparent 18rem),
+    rgba(2, 9, 14, 0.42);
+}
+
+.notice strong {
+  color: #ffe5ad;
+}
+
+.notice span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.notice button {
+  grid-row: span 2;
 }
 
 .command-toggle {

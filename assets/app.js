@@ -41,7 +41,7 @@ function api(path, options = {}, didRetry = false) {
   }).then(async (response) => {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.detail || `HTTP ${response.status}`);
+      throw createApiError(data.detail || data.message || `HTTP ${response.status}`, data);
     }
     return data;
   }).catch((error) => {
@@ -62,6 +62,14 @@ function api(path, options = {}, didRetry = false) {
 
     throw error;
   });
+}
+
+function createApiError(detail, data = {}) {
+  const message = typeof detail === "string" ? detail : detail?.message || detail?.error || JSON.stringify(detail);
+  const error = new Error(message || "Request failed");
+  error.payload = data;
+  error.detail = detail;
+  return error;
 }
 
 function getPath(object, path) {
@@ -125,8 +133,10 @@ async function refreshAll() {
     state.categories = discordData.categories || [];
 
     renderHealth();
+    renderCommandSyncNotice();
     renderChannelSelectors();
     bindConfigToInputs();
+    enhanceSelects();
     renderProviders();
     renderCommands();
     renderTriggers();
@@ -168,6 +178,25 @@ function renderHealth() {
   $("#bot-ready-pill").classList.toggle("ok", ready);
   $("#bot-ready-pill").classList.toggle("warn", connecting);
   $("#bot-ready-pill").classList.toggle("bad", crashed);
+}
+
+function renderCommandSyncNotice() {
+  const notice = $("#command-sync-notice");
+  if (!notice) return;
+  const sync = state.health?.bot?.commandSync || {};
+  if (!sync.error && sync.status !== "forbidden") {
+    notice.hidden = true;
+    notice.innerHTML = "";
+    return;
+  }
+  notice.hidden = false;
+  notice.innerHTML = `
+    <strong>Command sync needs access.</strong>
+    <span>${escapeHtml(sync.error || "Reinvite the bot with bot + applications.commands scopes.")}</span>
+    ${sync.inviteUrl ? `<button class="ghost" type="button" data-open-invite>Open invite</button>` : ""}
+  `;
+  const button = notice.querySelector("[data-open-invite]");
+  if (button) button.onclick = () => window.open(sync.inviteUrl, "_blank", "noopener,noreferrer");
 }
 
 function statusText(status) {
@@ -238,7 +267,15 @@ function normalizeConfigTheme() {
 function renderChannelSelectors() {
   $$("[data-channel-select]").forEach((select) => {
     const current = getPath(state.config, select.dataset.bind);
-    select.innerHTML = `<option value="">Select channel</option>${state.channels
+    const defaults = state.health?.defaults || {};
+    const channels = [...state.channels];
+    if (defaults.aiChannelId && !channels.some((channel) => channel.id === defaults.aiChannelId)) {
+      channels.unshift({
+        id: defaults.aiChannelId,
+        name: "Configured AI channel",
+      });
+    }
+    select.innerHTML = `<option value="">Select channel</option>${channels
       .map((channel) => `<option value="${channel.id}">#${channel.name}</option>`)
       .join("")}`;
     select.value = current || "";
@@ -246,7 +283,15 @@ function renderChannelSelectors() {
 
   $$("[data-category-select]").forEach((select) => {
     const current = getPath(state.config, select.dataset.bind);
-    select.innerHTML = `<option value="">Select category</option>${state.categories
+    const defaults = state.health?.defaults || {};
+    const categories = [...state.categories];
+    if (defaults.allowedCategoryId && !categories.some((category) => category.id === defaults.allowedCategoryId)) {
+      categories.unshift({
+        id: defaults.allowedCategoryId,
+        name: "Configured category",
+      });
+    }
+    select.innerHTML = `<option value="">Select category</option>${categories
       .map((category) => `<option value="${category.id}">${category.name}</option>`)
       .join("")}`;
     select.value = current || "";
@@ -279,6 +324,63 @@ function bindConfigToInputs() {
     };
   });
 }
+
+function enhanceSelects() {
+  $$("select").forEach((select) => {
+    select.classList.add("native-select-hidden");
+    let shell = select.nextElementSibling;
+    if (!shell || !shell.classList.contains("select-ui")) {
+      shell = document.createElement("div");
+      shell.className = "select-ui";
+      shell.innerHTML = `<button type="button" class="select-button"></button><div class="select-menu"></div>`;
+      select.insertAdjacentElement("afterend", shell);
+    }
+
+    const button = shell.querySelector(".select-button");
+    const menu = shell.querySelector(".select-menu");
+    const updateButton = () => {
+      const selected = select.options[select.selectedIndex];
+      button.textContent = selected ? selected.textContent : "Select option";
+      button.classList.toggle("placeholder", !select.value);
+    };
+
+    menu.innerHTML = Array.from(select.options)
+      .map(
+        (option) => `
+          <button type="button" class="select-option ${option.value === select.value ? "active" : ""}" data-value="${escapeAttr(option.value)}">
+            ${escapeHtml(option.textContent || "")}
+          </button>`
+      )
+      .join("");
+
+    button.onclick = (event) => {
+      event.preventDefault();
+      $$(".select-ui.open").forEach((item) => {
+        if (item !== shell) item.classList.remove("open");
+      });
+      shell.classList.toggle("open");
+    };
+
+    $$(".select-option", menu).forEach((item) => {
+      item.onclick = (event) => {
+        event.preventDefault();
+        select.value = item.dataset.value || "";
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        shell.classList.remove("open");
+        enhanceSelects();
+      };
+    });
+
+    updateButton();
+  });
+}
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".select-ui")) {
+    $$(".select-ui.open").forEach((item) => item.classList.remove("open"));
+  }
+});
 
 function renderProviders() {
   const providers = state.config.ai.providerOrder || [];
@@ -417,8 +519,20 @@ function addTrigger() {
 }
 
 async function syncCommands() {
-  await api(`/api/discord/${state.guildId}/sync-commands`, { method: "POST", body: "{}" });
-  toast("Slash commands synced.");
+  try {
+    await api(`/api/discord/${state.guildId}/sync-commands`, { method: "POST", body: "{}" });
+    toast("Slash commands synced.");
+    await refreshAll();
+  } catch (error) {
+    const inviteUrl = error.detail?.inviteUrl || error.payload?.detail?.inviteUrl || state.health?.bot?.commandSync?.inviteUrl;
+    if (inviteUrl) {
+      toast("Missing access. Opening bot invite...");
+      window.open(inviteUrl, "_blank", "noopener,noreferrer");
+    } else {
+      toast(error.message);
+    }
+    await refreshAll().catch(() => {});
+  }
 }
 
 function escapeAttr(value) {
@@ -444,6 +558,11 @@ function init() {
   $("#save-btn").onclick = () => saveConfig().catch((error) => toast(error.message));
   $("#add-trigger-btn").onclick = addTrigger;
   $("#sync-commands-btn").onclick = () => syncCommands().catch((error) => toast(error.message));
+  $("#invite-bot-btn").onclick = () => {
+    const inviteUrl = state.health?.bot?.commandSync?.inviteUrl;
+    if (inviteUrl) window.open(inviteUrl, "_blank", "noopener,noreferrer");
+    else toast("Connect the dashboard first.");
+  };
   $$(".nav-item").forEach((button) => (button.onclick = () => showPage(button.dataset.page)));
 
   setConnected(false);

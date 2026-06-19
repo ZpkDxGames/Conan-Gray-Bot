@@ -165,12 +165,39 @@
                   <select data-bind="ai.channelId" data-channel-select="text"></select>
                 </label>
                 <label>
+                  Reply mode
+                  <select data-bind="ai.replyMode">
+                    <option value="mention_or_reply">Mention or reply</option>
+                    <option value="mention_only">Mention only</option>
+                    <option value="reply_only">Reply only</option>
+                  </select>
+                </label>
+                <label>
                   Max history messages
                   <input type="number" min="4" max="40" data-bind="ai.maxHistoryMessages" />
                 </label>
                 <label>
                   Max output tokens
                   <input type="number" min="120" max="1600" data-bind="ai.maxOutputTokens" />
+                </label>
+                <label>
+                  Temperature
+                  <input type="number" min="0" max="1.5" step="0.1" data-bind="ai.temperature" />
+                </label>
+                <label>
+                  Channel cooldown
+                  <input type="number" min="0" max="3600" data-bind="ai.channelCooldownSeconds" />
+                </label>
+                <label>
+                  Reset keyword
+                  <input data-bind="ai.resetKeyword" placeholder="forget" />
+                </label>
+                <label class="inline-toggle">
+                  Embed replies
+                  <span class="switch">
+                    <input type="checkbox" data-bind="ai.embedReplies" />
+                    <span></span>
+                  </span>
                 </label>
               </div>
               <label>
@@ -212,8 +239,12 @@
                   <p class="eyebrow">Slash commands</p>
                   <h3>Enable or disable commands</h3>
                 </div>
-                <button class="ghost" id="sync-commands-btn">Sync commands</button>
+                <div class="top-actions">
+                  <button class="ghost" id="invite-bot-btn" type="button">Fix access</button>
+                  <button class="ghost" id="sync-commands-btn" type="button">Sync commands</button>
+                </div>
               </div>
+              <div class="notice" id="command-sync-notice" hidden></div>
               <div class="command-grid" id="commands-grid"></div>
             </article>
           </section>
@@ -234,6 +265,52 @@
                 <label>
                   Games/media category
                   <select data-bind="games.allowedCategoryId" data-category-select></select>
+                </label>
+                <label>
+                  Max active games/channel
+                  <input type="number" min="1" max="10" data-bind="games.maxActiveGamesPerChannel" />
+                </label>
+                <label class="inline-toggle">
+                  Tic-tac-toe
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.ticTacToeEnabled" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Coinflip
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.coinflipEnabled" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  8-ball
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.eightballEnabled" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Rock paper scissors
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.rpsEnabled" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Guess the song
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.guessSongEnabled" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Would you rather
+                  <span class="switch">
+                    <input type="checkbox" data-bind="games.wouldYouRatherEnabled" />
+                    <span></span>
+                  </span>
                 </label>
               </div>
             </article>
