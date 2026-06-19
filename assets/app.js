@@ -617,13 +617,13 @@ async function clearMemory(allChannels) {
   const select = $("#memory-channel-select");
   const channelId = select?.value || state.config?.ai?.channelId || "";
   if (allChannels) {
-    const accepted = window.confirm("Clear all shared AI memory for every channel in this server? This cannot be undone.");
+    const accepted = window.confirm("Clear all AI memory branches for every channel in this server? This cannot be undone.");
     if (!accepted) return;
   } else if (!channelId) {
     toast("Select a channel first.");
     return;
   } else {
-    const accepted = window.confirm("Clear the selected channel's shared AI memory?");
+    const accepted = window.confirm("Clear every AI memory branch in the selected channel?");
     if (!accepted) return;
   }
   const result = await api(`/api/admin/${state.guildId}/memory/clear`, {
