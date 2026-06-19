@@ -944,3 +944,61 @@ select:focus {
     grid-column: auto;
   }
 }
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.action-grid button,
+button.danger {
+  min-height: 2.7rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.action-grid button:hover:not(:disabled),
+button.danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.action-grid button:disabled,
+button.danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
+}
+
+.danger-zone {
+  border-color: rgba(251, 113, 133, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(251, 113, 133, 0.1), transparent 18rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03)),
+    var(--surface);
+}
+
+.memory-stats {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+}
+
+.placeholder-guide code {
+  color: var(--accent-3);
+  background: rgba(103, 232, 249, 0.08);
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.08rem 0.3rem;
+}
+
+@media (max-width: 720px) {
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-stats {
+    justify-items: start;
+  }
+}

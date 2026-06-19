@@ -12,6 +12,7 @@ let state = {
   guildId: localStorage.getItem(STORAGE.guildId) || PUBLIC_CONFIG.guildId || DEFAULT_GUILD_ID,
   config: null,
   health: null,
+  adminStatus: null,
   channels: [],
   categories: [],
   connected: false,
@@ -99,6 +100,7 @@ function pageTitle(name) {
     triggers: "Triggers",
     commands: "Commands",
     games: "Games",
+    admin: "Admin",
     "game-tictactoe": "Tic-tac-toe",
     "game-coinflip": "Coinflip",
     "game-eightball": "8-ball",
@@ -136,20 +138,23 @@ async function refreshAll() {
   $("#refresh-btn").textContent = "Refreshing...";
 
   try {
-    const [health, configData, discordData, logsData] = await Promise.all([
+    const [health, configData, discordData, logsData, adminStatusData] = await Promise.all([
       api("/api/health"),
       api(`/api/config/${state.guildId}`),
       api(`/api/discord/${state.guildId}/channels`).catch(() => ({ channels: [], categories: [], botReady: false })),
       api(`/api/logs/${state.guildId}`).catch(() => ({ logs: [] })),
+      api(`/api/admin/${state.guildId}/status`).catch(() => ({ botStatus: "unknown", memory: { channels: 0, messages: 0 } })),
     ]);
 
     state.health = health;
+    state.adminStatus = adminStatusData;
     state.config = configData.config;
     normalizeConfigTheme();
     state.channels = discordData.channels || [];
     state.categories = discordData.categories || [];
 
     renderHealth();
+    renderAdminStatus();
     renderCommandSyncNotice();
     renderChannelSelectors();
     bindConfigToInputs();
@@ -196,6 +201,35 @@ function renderHealth() {
   $("#bot-ready-pill").classList.toggle("warn", connecting);
   $("#bot-ready-pill").classList.toggle("bad", crashed);
 }
+
+function renderAdminStatus() {
+  const admin = state.adminStatus || {};
+  const memory = admin.memory || {};
+  const status = admin.botStatus || state.health?.bot?.status || "unknown";
+  const roleId = admin.adminRoleId || state.config?.admin?.roleId || "1514041404836282460";
+  const rolePill = $("#admin-role-pill");
+  if (rolePill) rolePill.textContent = `Role ${roleId}`;
+  const botStatus = $("#admin-bot-status");
+  if (botStatus) botStatus.textContent = statusText(status);
+  const channelCount = $("#memory-channel-count");
+  if (channelCount) channelCount.textContent = `${memory.channels || 0} channel${memory.channels === 1 ? "" : "s"}`;
+  const messageCount = $("#memory-message-count");
+  if (messageCount) messageCount.textContent = `${memory.messages || 0} stored messages`;
+
+  const online = status === "online" || status === "starting" || status === "connecting";
+  const startButton = $("#start-bot-btn");
+  const restartButton = $("#restart-bot-btn");
+  const shutdownButton = $("#shutdown-bot-btn");
+  if (startButton) startButton.disabled = online;
+  if (restartButton) restartButton.disabled = !online;
+  if (shutdownButton) shutdownButton.disabled = !online;
+
+  const pauseButton = $("#pause-ai-btn");
+  const resumeButton = $("#resume-ai-btn");
+  if (pauseButton) pauseButton.disabled = admin.aiEnabled === false;
+  if (resumeButton) resumeButton.disabled = admin.aiEnabled !== false;
+}
+
 
 function renderCommandSyncNotice() {
   const notice = $("#command-sync-notice");
@@ -313,6 +347,15 @@ function renderChannelSelectors() {
       .join("")}`;
     select.value = current || "";
   });
+
+  const memorySelect = $("#memory-channel-select");
+  if (memorySelect) {
+    const previous = memorySelect.value || state.config?.ai?.channelId || "";
+    memorySelect.innerHTML = `<option value="">Select channel</option>${state.channels
+      .map((channel) => `<option value="${escapeAttr(channel.id)}">#${escapeHtml(channel.name)}</option>`)
+      .join("")}`;
+    memorySelect.value = previous;
+  }
 }
 
 function bindConfigToInputs() {
@@ -342,6 +385,9 @@ function bindConfigToInputs() {
         nextValue = input.value;
       }
       setPath(state.config, input.dataset.bind, nextValue);
+      if (input.dataset.bind === "ai.replyStyle") {
+        state.config.ai.embedReplies = nextValue === "embed";
+      }
     };
   });
 }
@@ -556,6 +602,50 @@ async function syncCommands() {
   }
 }
 
+async function runBotAction(action) {
+  const labels = { start: "start", restart: "restart", shutdown: "shut down" };
+  if (["restart", "shutdown"].includes(action)) {
+    const accepted = window.confirm(`Are you sure you want to ${labels[action]} the Discord bot connection?`);
+    if (!accepted) return;
+  }
+  await api(`/api/admin/${state.guildId}/bot/${action}`, { method: "POST", body: "{}" });
+  toast(action === "shutdown" ? "Discord bot stopped. The dashboard is still online." : `Bot ${labels[action]} requested.`);
+  await refreshAll();
+}
+
+async function clearMemory(allChannels) {
+  const select = $("#memory-channel-select");
+  const channelId = select?.value || state.config?.ai?.channelId || "";
+  if (allChannels) {
+    const accepted = window.confirm("Clear all shared AI memory for every channel in this server? This cannot be undone.");
+    if (!accepted) return;
+  } else if (!channelId) {
+    toast("Select a channel first.");
+    return;
+  } else {
+    const accepted = window.confirm("Clear the selected channel's shared AI memory?");
+    if (!accepted) return;
+  }
+  const result = await api(`/api/admin/${state.guildId}/memory/clear`, {
+    method: "POST",
+    body: JSON.stringify({ allChannels, channelId }),
+  });
+  toast(allChannels ? `Cleared memory for ${result.clearedChannels || 0} channel(s).` : "Selected channel memory cleared.");
+  await refreshAll();
+}
+
+async function runAiAction(action) {
+  await api(`/api/admin/${state.guildId}/ai/${action}`, { method: "POST", body: "{}" });
+  toast(action === "pause" ? "AI replies paused." : "AI replies resumed.");
+  await refreshAll();
+}
+
+async function saveAndApplyPresence() {
+  await saveConfig();
+  toast("Presence settings saved and applied.");
+}
+
+
 function escapeAttr(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
@@ -579,6 +669,14 @@ function init() {
   $("#save-btn").onclick = () => saveConfig().catch((error) => toast(error.message));
   $("#add-trigger-btn").onclick = addTrigger;
   $("#sync-commands-btn").onclick = () => syncCommands().catch((error) => toast(error.message));
+  $("#start-bot-btn").onclick = () => runBotAction("start").catch((error) => toast(error.message));
+  $("#restart-bot-btn").onclick = () => runBotAction("restart").catch((error) => toast(error.message));
+  $("#shutdown-bot-btn").onclick = () => runBotAction("shutdown").catch((error) => toast(error.message));
+  $("#clear-channel-memory-btn").onclick = () => clearMemory(false).catch((error) => toast(error.message));
+  $("#clear-all-memory-btn").onclick = () => clearMemory(true).catch((error) => toast(error.message));
+  $("#pause-ai-btn").onclick = () => runAiAction("pause").catch((error) => toast(error.message));
+  $("#resume-ai-btn").onclick = () => runAiAction("resume").catch((error) => toast(error.message));
+  $("#apply-presence-btn").onclick = () => saveAndApplyPresence().catch((error) => toast(error.message));
   $("#invite-bot-btn").onclick = () => {
     const inviteUrl = state.health?.bot?.commandSync?.inviteUrl;
     if (inviteUrl) window.open(inviteUrl, "_blank", "noopener,noreferrer");

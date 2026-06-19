@@ -32,6 +32,7 @@
           <button class="nav-item" data-page="triggers">Triggers</button>
           <button class="nav-item" data-page="commands">Commands</button>
           <button class="nav-item" data-page="games">Games</button>
+          <button class="nav-item" data-page="admin">Admin</button>
           <button class="nav-item nav-sub" data-page="game-tictactoe">Tic-tac-toe</button>
           <button class="nav-item nav-sub" data-page="game-coinflip">Coinflip</button>
           <button class="nav-item nav-sub" data-page="game-eightball">8-ball</button>
@@ -144,7 +145,11 @@
                 </label>
                 <label>
                   Accent color
-                  <input data-bind="appearance.accentColor" placeholder="#f7b7c8" />
+                  <input data-bind="appearance.accentColor" placeholder="#67e8f9" />
+                </label>
+                <label>
+                  Bot admin role ID
+                  <input data-bind="admin.roleId" placeholder="1514041404836282460" />
                 </label>
               </div>
             </article>
@@ -163,7 +168,7 @@
                 </label>
               </div>
               <p class="muted">
-                In the configured AI channel, @mentioning the bot starts/continues one shared memory session for everyone in that channel.
+                Everyone in the configured channel shares one ordered conversation memory. Speaker names and IDs remain attached to the correct person.
               </p>
               <div class="form-grid">
                 <label>
@@ -176,11 +181,12 @@
                     <option value="mention_or_reply">Mention or reply</option>
                     <option value="mention_only">Mention only</option>
                     <option value="reply_only">Reply only</option>
+                    <option value="all_messages">All channel messages</option>
                   </select>
                 </label>
                 <label>
                   Max history messages
-                  <input type="number" min="4" max="40" data-bind="ai.maxHistoryMessages" />
+                  <input type="number" min="4" max="80" data-bind="ai.maxHistoryMessages" />
                 </label>
                 <label>
                   Max output tokens
@@ -191,25 +197,160 @@
                   <input type="number" min="0" max="1.5" step="0.1" data-bind="ai.temperature" />
                 </label>
                 <label>
-                  Channel cooldown
+                  Channel cooldown (seconds)
                   <input type="number" min="0" max="3600" data-bind="ai.channelCooldownSeconds" />
                 </label>
                 <label>
                   Reset keyword
                   <input data-bind="ai.resetKeyword" placeholder="forget" />
                 </label>
+                <label>
+                  Empty mention prompt
+                  <input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural." />
+                </label>
                 <label class="inline-toggle">
-                  Embed replies
+                  Reset keyword is admin-only
                   <span class="switch">
-                    <input type="checkbox" data-bind="ai.embedReplies" />
+                    <input type="checkbox" data-bind="ai.resetKeywordAdminOnly" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Show typing indicator
+                  <span class="switch">
+                    <input type="checkbox" data-bind="ai.typingIndicator" />
+                    <span></span>
+                  </span>
+                </label>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Natural conversation</p>
+                  <h3>Tone and response structure</h3>
+                </div>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Tone style
+                  <select data-bind="ai.toneStyle">
+                    <option value="adaptive">Adaptive</option>
+                    <option value="casual">Casual</option>
+                    <option value="supportive">Supportive</option>
+                    <option value="witty">Witty</option>
+                    <option value="direct">Direct</option>
+                  </select>
+                </label>
+                <label>
+                  Response length
+                  <select data-bind="ai.responseLength">
+                    <option value="brief">Brief</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="detailed">Detailed</option>
+                  </select>
+                </label>
+                <label>
+                  Emoji usage
+                  <select data-bind="ai.emojiStyle">
+                    <option value="none">None</option>
+                    <option value="rare">Rare</option>
+                    <option value="occasional">Occasional</option>
+                    <option value="frequent">Frequent</option>
+                  </select>
+                </label>
+                <label>
+                  Markdown structure
+                  <select data-bind="ai.markdownStyle">
+                    <option value="none">None</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="natural">Natural</option>
+                    <option value="structured">Structured</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Custom structure instructions
+                <textarea data-bind="ai.structureInstructions" rows="5" placeholder="Example: Start with the direct answer. Use bullets only for 3+ items. Never end with a generic offer."></textarea>
+              </label>
+              <label>
+                Personality prompt
+                <textarea data-bind="ai.personality" rows="8"></textarea>
+              </label>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Message builder</p>
+                  <h3>Reply template and delivery</h3>
+                </div>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Reply style
+                  <select data-bind="ai.replyStyle">
+                    <option value="embed">Embed</option>
+                    <option value="plain">Plain message</option>
+                  </select>
+                </label>
+                <label>
+                  Maximum characters per message
+                  <input type="number" min="200" max="4000" data-bind="ai.maxDiscordMessageLength" />
+                </label>
+                <label class="inline-toggle">
+                  Split long replies
+                  <span class="switch">
+                    <input type="checkbox" data-bind="ai.splitLongReplies" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Mention the author
+                  <span class="switch">
+                    <input type="checkbox" data-bind="ai.mentionAuthor" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Provider in footer
+                  <span class="switch">
+                    <input type="checkbox" data-bind="ai.includeProviderFooter" />
+                    <span></span>
+                  </span>
+                </label>
+                <label class="inline-toggle">
+                  Embed timestamp
+                  <span class="switch">
+                    <input type="checkbox" data-bind="appearance.embedShowTimestamp" />
                     <span></span>
                   </span>
                 </label>
               </div>
               <label>
-                Personality prompt
-                <textarea data-bind="ai.personality" rows="8"></textarea>
+                Message template
+                <textarea data-bind="ai.messageTemplate" rows="5" placeholder="{response}"></textarea>
               </label>
+              <p class="hint placeholder-guide">Placeholders: <code>{response}</code>, <code>{user}</code>, <code>{mention}</code>, <code>{channel}</code>, <code>{guild}</code>, <code>{provider}</code>. If <code>{response}</code> is omitted, the AI response is appended automatically.</p>
+              <div class="form-grid">
+                <label>
+                  Embed title
+                  <input data-bind="appearance.embedTitle" placeholder="Optional title" />
+                </label>
+                <label>
+                  Embed footer
+                  <input data-bind="appearance.embedFooter" />
+                </label>
+                <label>
+                  Embed thumbnail URL
+                  <input data-bind="appearance.embedThumbnailUrl" placeholder="https://..." />
+                </label>
+                <label>
+                  Accent color
+                  <input data-bind="appearance.accentColor" placeholder="#67e8f9" />
+                </label>
+              </div>
             </article>
 
             <article class="card">
@@ -220,7 +361,7 @@
                 </div>
               </div>
               <div class="provider-list" id="provider-list"></div>
-              <p class="hint">Default: Gemini first, then OpenRouter, then Groq. Change the comma-separated order if needed.</p>
+              <p class="hint">Default: Gemini first, then OpenRouter, then Groq.</p>
               <input data-bind="ai.providerOrder" data-array placeholder="gemini, openrouter, groq" />
             </article>
           </section>
@@ -470,6 +611,116 @@
                 Question pool
                 <textarea data-bind="games.wouldYouRatherQuestions" data-lines rows="8" placeholder="One question per line"></textarea>
               </label>
+            </article>
+          </section>
+
+          <section class="page" data-page-panel="admin">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Discord permissions</p>
+                  <h3>Admin-only commands</h3>
+                </div>
+                <span class="hero-pill" id="admin-role-pill">Role not loaded</span>
+              </div>
+              <p class="muted">Discord commands are available only to members with the configured role. Dashboard actions remain protected by the dashboard key.</p>
+              <div class="form-grid">
+                <label>
+                  Admin role ID
+                  <input data-bind="admin.roleId" placeholder="1514041404836282460" />
+                </label>
+                <label>
+                  Permission denied message
+                  <input data-bind="admin.deniedMessage" />
+                </label>
+                <label>
+                  Memory cleared message
+                  <input data-bind="admin.memoryClearedMessage" />
+                </label>
+                <label>
+                  Restart confirmation message
+                  <input data-bind="admin.restartMessage" />
+                </label>
+                <label>
+                  Shutdown confirmation message
+                  <input data-bind="admin.shutdownMessage" />
+                </label>
+              </div>
+            </article>
+
+            <article class="card danger-zone">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Lifecycle</p>
+                  <h3>Bot controls</h3>
+                </div>
+                <strong id="admin-bot-status">Unknown</strong>
+              </div>
+              <div class="action-grid">
+                <button class="ghost" id="start-bot-btn" type="button">Start bot</button>
+                <button class="ghost" id="restart-bot-btn" type="button">Restart bot</button>
+                <button class="danger" id="shutdown-bot-btn" type="button">Shutdown bot</button>
+                <button class="ghost" id="pause-ai-btn" type="button">Pause AI</button>
+                <button class="ghost" id="resume-ai-btn" type="button">Resume AI</button>
+              </div>
+              <p class="hint">Shutdown stops only the Discord websocket. The API and dashboard stay online so Start bot can reconnect it.</p>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Shared channel memory</p>
+                  <h3>Memory controls</h3>
+                </div>
+                <div class="memory-stats">
+                  <strong id="memory-channel-count">0 channels</strong>
+                  <small id="memory-message-count">0 messages</small>
+                </div>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Channel memory to clear
+                  <select id="memory-channel-select"></select>
+                </label>
+              </div>
+              <div class="action-grid">
+                <button class="ghost" id="clear-channel-memory-btn" type="button">Clear selected channel</button>
+                <button class="danger" id="clear-all-memory-btn" type="button">Clear all server memory</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Discord presence</p>
+                  <h3>Status customization</h3>
+                </div>
+                <button class="ghost" id="apply-presence-btn" type="button">Save & apply</button>
+              </div>
+              <div class="form-grid">
+                <label>
+                  Status
+                  <select data-bind="presence.status">
+                    <option value="online">Online</option>
+                    <option value="idle">Idle</option>
+                    <option value="dnd">Do not disturb</option>
+                    <option value="invisible">Invisible</option>
+                  </select>
+                </label>
+                <label>
+                  Activity type
+                  <select data-bind="presence.activityType">
+                    <option value="playing">Playing</option>
+                    <option value="listening">Listening</option>
+                    <option value="watching">Watching</option>
+                    <option value="competing">Competing</option>
+                  </select>
+                </label>
+                <label>
+                  Activity text
+                  <input data-bind="presence.activityText" placeholder="dramatic bridge sections" />
+                </label>
+              </div>
             </article>
           </section>
 
