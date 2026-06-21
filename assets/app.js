@@ -55,7 +55,7 @@ const PAGE_META = {
   "game-coinflip": { section: "Games", title: "Coinflip", description: "Labels and result message customization." },
   "game-eightball": { section: "Games", title: "8-ball", description: "Custom answer pool and command availability." },
   "game-rps": { section: "Games", title: "Rock Paper Scissors", description: "Win, loss, and draw responses." },
-  "game-guesssong": { section: "Games", title: "Guess the Song", description: "Prompt and hint pool configuration." },
+  "game-guesssong": { section: "Games", title: "Guess the Song", description: "Reply-driven rounds, AI answer judging, attempts, and structured song clues." },
   "game-wyr": { section: "Games", title: "Would You Rather", description: "Question pool and enable state." },
   "admin-permissions": { section: "Administration", title: "Permissions", description: "Role-gated commands and admin feedback messages." },
   "admin-lifecycle": { section: "Administration", title: "Lifecycle", description: "Start, restart, stop, pause, or resume the bot." },

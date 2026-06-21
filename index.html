@@ -357,24 +357,26 @@
 </div>
 </div>
 <div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><div><strong>Results stay deterministic.</strong><span>The AI only writes the reaction around exact function and game facts. If every provider fails, the bot selects from an isolated fallback pool of up to 50 unique responses per feature.</span></div></div>
-<div class="settings-columns">
-<article class="card">
+<div class="settings-columns action-settings-columns">
+<article class="card action-presentation-card">
 <div class="card-head"><div><p class="eyebrow">Unified presentation</p><h3>Embed every response</h3></div></div>
-<div class="form-grid">
-<label class="inline-toggle">Use embeds everywhere<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Semantic status colors<span class="switch"><input data-bind="presentation.semanticColors" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Show timestamps<span class="switch"><input data-bind="presentation.showTimestamp" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Show requester identity<span class="switch"><input data-bind="presentation.showRequester" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Detailed result fields<span class="switch"><input data-bind="presentation.richDetailFields" type="checkbox"/><span></span></span></label>
+<div class="toggle-grid action-toggle-grid">
+<label class="inline-toggle"><span>Use embeds everywhere</span><span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Semantic status colors</span><span class="switch"><input data-bind="presentation.semanticColors" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Show timestamps</span><span class="switch"><input data-bind="presentation.showTimestamp" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Show requester identity</span><span class="switch"><input data-bind="presentation.showRequester" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Detailed result fields</span><span class="switch"><input data-bind="presentation.richDetailFields" type="checkbox"/><span></span></span></label>
 </div>
 <p class="hint">This presentation layer applies to AI chat, slash commands, games, admin feedback, media notices, disabled states, and errors.</p>
 </article>
-<article class="card">
+<article class="card action-interpretation-card">
 <div class="card-head"><div><p class="eyebrow">Interpretation layer</p><h3>AI-generated reactions</h3></div></div>
-<div class="form-grid">
-<label class="inline-toggle">Enable AI interpretation<span class="switch"><input data-bind="presentation.aiActionInterpretation" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Interpret functions and commands<span class="switch"><input data-bind="presentation.interpretFunctions" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Interpret games<span class="switch"><input data-bind="presentation.interpretGames" type="checkbox"/><span></span></span></label>
+<div class="toggle-grid action-toggle-grid action-toggle-grid-single">
+<label class="inline-toggle"><span>Enable AI interpretation</span><span class="switch"><input data-bind="presentation.aiActionInterpretation" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Interpret functions and commands</span><span class="switch"><input data-bind="presentation.interpretFunctions" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Interpret games</span><span class="switch"><input data-bind="presentation.interpretGames" type="checkbox"/><span></span></span></label>
+</div>
+<div class="form-grid action-number-grid">
 <label>Fallbacks per feature<input data-bind="presentation.fallbackPoolSize" max="50" min="1" type="number"/></label>
 <label>Narration token limit<input data-bind="presentation.narrationMaxTokens" max="300" min="40" type="number"/></label>
 <label>AI timeout before fallback<input data-bind="presentation.narrationTimeoutSeconds" max="20" min="2" type="number"/></label>
@@ -793,7 +795,7 @@
 <article class="card">
 <div class="card-head">
 <div>
-<p class="eyebrow">Game config</p>
+<p class="eyebrow">Reply-driven game</p>
 <h3>Guess the Song</h3>
 </div>
 <label class="switch">
@@ -801,14 +803,17 @@
 <span></span>
 </label>
 </div>
-<label>
-                Prompt
-                <input data-bind="games.guessSongPrompt"/>
-</label>
-<label>
-                Hint pool
-                <textarea data-bind="games.guessSongHints" data-lines="" placeholder="One hint per line" rows="8"></textarea>
-</label>
+<div class="form-grid two-column-form">
+<label class="form-span-two">Prompt<input data-bind="games.guessSongPrompt"/></label>
+<label>Maximum attempts<input data-bind="games.guessSongMaxAttempts" max="20" min="1" type="number"/></label>
+<label>Round timeout (minutes)<input data-bind="games.guessSongRoundTimeoutMinutes" max="1440" min="1" type="number"/></label>
+<label>AI judge timeout (seconds)<input data-bind="games.guessSongJudgeTimeoutSeconds" max="20" min="2" type="number"/></label>
+<label class="inline-toggle"><span>Use AI to judge fuzzy answers</span><span class="switch"><input data-bind="games.guessSongUseAiJudge" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Allow anyone to answer</span><span class="switch"><input data-bind="games.guessSongAllowAnyone" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Reveal answer after final attempt</span><span class="switch"><input data-bind="games.guessSongRevealOnFailure" type="checkbox"/><span></span></span></label>
+</div>
+<label class="guess-rounds-field">Song rounds<textarea data-bind="games.guessSongRounds" data-lines="" placeholder="Heather | sweater song | A bittersweet song about wishing you were the person somebody chose." rows="12"></textarea></label>
+<p class="hint"><strong>One round per line:</strong> <code>Answer | alias 1, alias 2 | Hint</code>. Users answer by replying directly to the bot's clue. Exact titles, aliases, minor typos, and AI-confirmed equivalents are accepted. The same generic reply-judge framework can support future guessing games.</p>
 </article>
 </section><section class="page" data-page-panel="game-wyr">
 <div class="page-intro">
