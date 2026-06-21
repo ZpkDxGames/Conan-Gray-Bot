@@ -18,7 +18,7 @@
 <div class="sidebar-head">
 <div class="brand">
 <div aria-hidden="true" class="brand-mark">
-<img alt="" onerror="this.hidden=true" src="./assets/logo.webp"/>
+<img alt="" src="./assets/logo.webp"/>
 <span>CG</span>
 </div>
 <div class="brand-copy">
@@ -146,12 +146,13 @@
 <p class="eyebrow">Connect dashboard</p>
 <h2>Unlock the dashboard</h2>
 <p class="muted">
-              Paste the backend URL and dashboard key configured in Discloud. The key is stored only in this browser.
+              The Vercel deployment proxies <code>/api</code> to Discloud, so the gateway is already selected. Enter the private dashboard key to continue.
             </p>
 </div>
 <label>
-            Backend API URL
-            <input id="api-base-input" placeholder="https://your-discloud-app.discloud.app"/>
+            Dashboard API gateway
+            <input id="api-base-input" placeholder="https://your-vercel-dashboard.vercel.app"/>
+            <small class="field-help">Keep this set to the current Vercel URL. The dashboard forwards <code>/api</code> to Discloud without browser CORS.</small>
 </label>
 <label>
             Dashboard key

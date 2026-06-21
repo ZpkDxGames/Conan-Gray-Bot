@@ -2467,3 +2467,15 @@ body.reduce-motion *::after {
     grid-template-columns: 1fr;
   }
 }
+
+.field-help {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.field-help code {
+  color: var(--accent);
+}

@@ -9,10 +9,15 @@ const STORAGE = {
   navGroups: "conan-dashboard-nav-groups",
   density: "conan-dashboard-density",
   reduceMotion: "conan-dashboard-reduce-motion",
+  proxyMigration: "conan-dashboard-proxy-migration-v1",
 };
 
+const DEFAULT_API_BASE = PUBLIC_CONFIG.preferSameOriginProxy !== false
+  ? window.location.origin
+  : (PUBLIC_CONFIG.apiBase || window.location.origin);
+
 let state = {
-  apiBase: localStorage.getItem(STORAGE.apiBase) || PUBLIC_CONFIG.apiBase || window.location.origin,
+  apiBase: localStorage.getItem(STORAGE.apiBase) || DEFAULT_API_BASE,
   key: localStorage.getItem(STORAGE.key) || PUBLIC_CONFIG.dashboardKey || "",
   guildId: localStorage.getItem(STORAGE.guildId) || PUBLIC_CONFIG.guildId || DEFAULT_GUILD_ID,
   config: null,
@@ -80,15 +85,17 @@ function toast(message) {
   toast._timer = setTimeout(() => el.classList.remove("show"), 2800);
 }
 
-function api(path, options = {}, didRetry = false) {
+function api(path, options = {}) {
   const base = normalizeApiBase(state.apiBase);
+  const headers = {
+    "X-Dashboard-Key": state.key,
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(options.headers || {}),
+  };
   return fetch(`${base}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Dashboard-Key": state.key,
-      ...(options.headers || {}),
-    },
+    cache: "no-store",
+    headers,
   }).then(async (response) => {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -96,21 +103,14 @@ function api(path, options = {}, didRetry = false) {
     }
     return data;
   }).catch((error) => {
-    if (!didRetry && shouldRecoverApiBase(error)) {
-      const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
-      state.apiBase = fallback;
-      localStorage.setItem(STORAGE.apiBase, fallback);
-      const input = $("#api-base-input");
-      if (input) input.value = fallback;
-      return api(path, options, true);
-    }
-
     if (error instanceof TypeError && /fetch/i.test(error.message)) {
+      const throughProxy = base === normalizeApiBase(window.location.origin);
+      const target = throughProxy ? `${window.location.origin}/api` : base;
       throw new Error(
-        `Failed to fetch ${base}${path}. Check if the Discloud API is online and accepting CORS from this dashboard.`
+        `Failed to reach ${throughProxy ? "the Vercel API proxy" : "the backend"} at ${target}. ` +
+        `Verify the Vercel rewrite and that https://conanbot.discloud.app/api/health is online.`
       );
     }
-
     throw error;
   });
 }
@@ -732,22 +732,6 @@ function normalizeApiBase(value) {
     .replace(/\/api$/i, "");
 }
 
-function shouldRecoverApiBase(error) {
-  const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
-  const current = normalizeApiBase(state.apiBase);
-  if (!fallback || current === fallback) return false;
-  if (error instanceof TypeError && /fetch/i.test(error.message)) return true;
-  return isLocalOrDashboardHost(current);
-}
-
-function isLocalOrDashboardHost(value) {
-  try {
-    const host = new URL(value).host;
-    return host === window.location.host || host === "localhost:8080" || host.startsWith("localhost") || host.startsWith("127.0.0.1");
-  } catch {
-    return false;
-  }
-}
 
 function normalizeConfigTheme() {
   state.config.appearance ??= {};
@@ -1428,11 +1412,17 @@ function escapeHtml(value) {
 }
 
 function init() {
-  state.apiBase = normalizeApiBase(state.apiBase);
-  const fallback = normalizeApiBase(PUBLIC_CONFIG.apiBase || "https://conanbot.discloud.app");
-  if (fallback && isLocalOrDashboardHost(state.apiBase)) {
-    state.apiBase = fallback;
-    localStorage.setItem(STORAGE.apiBase, fallback);
+  const proxyBase = normalizeApiBase(window.location.origin);
+  const directBase = normalizeApiBase(PUBLIC_CONFIG.directApiBase || "https://conanbot.discloud.app");
+  const migrationDone = localStorage.getItem(STORAGE.proxyMigration) === "1";
+  state.apiBase = normalizeApiBase(state.apiBase || DEFAULT_API_BASE);
+
+  // Migrate the old direct-Discloud default to Vercel's same-origin proxy once.
+  // A user may still enter a direct backend URL manually after this migration.
+  if (PUBLIC_CONFIG.preferSameOriginProxy !== false && (!migrationDone || state.apiBase === directBase)) {
+    state.apiBase = proxyBase;
+    localStorage.setItem(STORAGE.apiBase, proxyBase);
+    localStorage.setItem(STORAGE.proxyMigration, "1");
   }
 
   const apiInput = $("#api-base-input");
