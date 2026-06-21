@@ -18,7 +18,7 @@
 <div class="sidebar-head">
 <div class="brand">
 <div aria-hidden="true" class="brand-mark">
-<img alt="" src="./assets/logo.webp"/>
+<img alt="" onerror="this.hidden=true" src="./assets/logo.webp"/>
 <span>CG</span>
 </div>
 <div class="brand-copy">
@@ -152,11 +152,12 @@
 <label>
             Dashboard API gateway
             <input id="api-base-input" placeholder="https://your-vercel-dashboard.vercel.app"/>
-            <small class="field-help">Keep this set to the current Vercel URL. The dashboard forwards <code>/api</code> to Discloud without browser CORS.</small>
+            <small class="field-help">Use this Vercel URL for the same-origin proxy. Direct Discloud URLs remain available for diagnostics.</small>
 </label>
 <label>
             Dashboard key
-            <input id="dashboard-key-input" placeholder="••••••••" type="password"/>
+            <input autocomplete="current-password" id="dashboard-key-input" placeholder="••••••••" spellcheck="false" type="password"/>
+            <small class="field-help" id="dashboard-key-status">Use DASHBOARD_SESSION_KEY from the currently deployed Discloud .env.</small>
 </label>
 <label>
             Guild ID

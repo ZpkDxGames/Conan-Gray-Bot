@@ -2479,3 +2479,11 @@ body.reduce-motion *::after {
 .field-help code {
   color: var(--accent);
 }
+
+#dashboard-key-status.auth-ok {
+  color: #74f2c0;
+}
+
+#dashboard-key-status.auth-error {
+  color: #ff9aae;
+}

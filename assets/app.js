@@ -18,7 +18,7 @@ const DEFAULT_API_BASE = PUBLIC_CONFIG.preferSameOriginProxy !== false
 
 let state = {
   apiBase: localStorage.getItem(STORAGE.apiBase) || DEFAULT_API_BASE,
-  key: localStorage.getItem(STORAGE.key) || PUBLIC_CONFIG.dashboardKey || "",
+  key: (localStorage.getItem(STORAGE.key) || PUBLIC_CONFIG.dashboardKey || "").trim(),
   guildId: localStorage.getItem(STORAGE.guildId) || PUBLIC_CONFIG.guildId || DEFAULT_GUILD_ID,
   config: null,
   health: null,
@@ -88,7 +88,7 @@ function toast(message) {
 function api(path, options = {}) {
   const base = normalizeApiBase(state.apiBase);
   const headers = {
-    "X-Dashboard-Key": state.key,
+    ...(state.key ? { "X-Dashboard-Key": state.key } : {}),
     ...(options.body ? { "Content-Type": "application/json" } : {}),
     ...(options.headers || {}),
   };
@@ -121,6 +121,51 @@ function createApiError(detail, data = {}) {
   error.payload = data;
   error.detail = detail;
   return error;
+}
+
+function renderAuthStatus(auth = null) {
+  const status = $("#dashboard-key-status");
+  if (!status) return;
+  status.classList.remove("auth-ok", "auth-error");
+  if (!auth) {
+    status.textContent = "Use DASHBOARD_SESSION_KEY from the currently deployed Discloud .env.";
+    return;
+  }
+  if (auth.valid) {
+    status.classList.add("auth-ok");
+    status.textContent = `Key accepted • deployment ID ${auth.expectedKeyId || "unknown"}`;
+    return;
+  }
+  status.classList.add("auth-error");
+  if (!auth.headerReceived) {
+    status.textContent = "The key header did not reach Discloud. Redeploy the Vercel proxy package.";
+    return;
+  }
+  const expected = auth.expectedKeyId || "unknown";
+  const received = auth.receivedKeyId || "missing";
+  status.textContent = `Key mismatch • backend ${expected} • entered ${received}`;
+}
+
+async function checkDashboardAuth() {
+  const base = normalizeApiBase(state.apiBase);
+  const response = await fetch(`${base}/api/auth/check`, {
+    cache: "no-store",
+    headers: state.key ? { "X-Dashboard-Key": state.key } : {},
+  });
+  const auth = await response.json().catch(() => ({}));
+  if (!response.ok) throw createApiError(auth.detail || auth.message || `HTTP ${response.status}`, auth);
+  renderAuthStatus(auth);
+  if (!auth.valid) {
+    localStorage.removeItem(STORAGE.key);
+    throw createApiError({
+      code: "invalid_dashboard_key",
+      message: auth.headerReceived
+        ? `Invalid dashboard key. Backend key ID: ${auth.expectedKeyId || "unknown"}.`
+        : "The Vercel proxy did not forward the dashboard key header.",
+      ...auth,
+    }, auth);
+  }
+  return auth;
 }
 
 function getPath(object, path) {
@@ -340,11 +385,12 @@ function setConnected(connected) {
 
 async function connect() {
   state.apiBase = normalizeApiBase($("#api-base-input").value.trim() || window.location.origin);
-  state.key = $("#dashboard-key-input").value;
+  state.key = $("#dashboard-key-input").value.trim();
   state.guildId = $("#guild-id-input").value.trim() || DEFAULT_GUILD_ID;
   localStorage.setItem(STORAGE.apiBase, state.apiBase);
-  localStorage.setItem(STORAGE.key, state.key);
   localStorage.setItem(STORAGE.guildId, state.guildId);
+  await checkDashboardAuth();
+  localStorage.setItem(STORAGE.key, state.key);
   await refreshAll();
   setConnected(true);
   toast("Dashboard connected.");
@@ -1431,6 +1477,7 @@ function init() {
   if (apiInput) apiInput.value = state.apiBase;
   if (keyInput) keyInput.value = state.key;
   if (guildInput) guildInput.value = state.guildId;
+  renderAuthStatus();
 
   bindUiPreferenceControls();
   initNavigation();
@@ -1442,6 +1489,8 @@ function init() {
   };
 
   click("#connect-btn", () => connect().catch((error) => toast(error.message)));
+  const dashboardKeyInput = $("#dashboard-key-input");
+  if (dashboardKeyInput) dashboardKeyInput.oninput = () => renderAuthStatus();
   click("#refresh-btn", () => refreshAll().then(() => toast("Refreshed.")).catch((error) => toast(error.message)));
   click("#save-btn", () => saveConfig().catch((error) => toast(error.message)));
   click("#add-trigger-btn", addTrigger);
@@ -1495,7 +1544,8 @@ function init() {
   setConnected(false);
 
   if (state.key && state.apiBase) {
-    refreshAll()
+    checkDashboardAuth()
+      .then(() => refreshAll())
       .then(() => setConnected(true))
       .catch((error) => {
         setConnected(false);
