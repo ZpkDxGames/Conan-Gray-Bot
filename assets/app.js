@@ -54,7 +54,7 @@ const PAGE_META = {
   "media-library": { section: "Media", title: "Library", description: "Browse and manage archived Discord photos and videos." },
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
   "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, active Drive identity, and connection testing." },
-  triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs and response text." },
+  triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs or random Drive selections." },
   commands: { section: "Discord", title: "Command setup", description: "Control runtime availability and publish the exact Discord slash-command tree." },
   games: { section: "Games", title: "Game hub", description: "Global limits and links to every game configuration." },
   "game-tictactoe": { section: "Games", title: "Tic-tac-toe", description: "Board behavior, bot opponents, and result messages." },
@@ -1400,6 +1400,19 @@ function setAllCommands(enabled) {
   setDirty(true);
 }
 
+function isValidTriggerMediaSource(value) {
+  const source = String(value || "").trim();
+  if (!source.toLowerCase().startsWith("{random")) return true;
+  return ["{random}", "{random:image}", "{random:video}"].includes(source.toLowerCase());
+}
+
+function updateTriggerSourceValidity(input) {
+  if (!input || input.dataset.triggerField !== "mediaUrl") return;
+  const valid = isValidTriggerMediaSource(input.value);
+  input.setAttribute("aria-invalid", valid ? "false" : "true");
+  input.title = valid ? "" : "Use {random}, {random:image}, or {random:video}.";
+}
+
 function renderTriggers() {
   const triggers = state.config.triggers || [];
   $("#triggers-list").innerHTML = triggers.length
@@ -1418,14 +1431,31 @@ function renderTriggers() {
       } else {
         trigger[field] = input.value;
       }
+      updateTriggerSourceValidity(input);
       setDirty(true);
     };
   });
+
+  $$('[data-trigger-field="mediaUrl"]').forEach(updateTriggerSourceValidity);
 
   $$("[data-remove-trigger]").forEach((button) => {
     button.onclick = () => {
       state.config.triggers = state.config.triggers.filter((item) => item.id !== button.dataset.removeTrigger);
       renderTriggers();
+      setDirty(true);
+    };
+  });
+
+  $$("[data-trigger-random]").forEach((button) => {
+    button.onclick = () => {
+      const trigger = state.config.triggers.find((item) => item.id === button.dataset.triggerId);
+      if (!trigger) return;
+      trigger.mediaUrl = button.dataset.triggerRandom || "{random}";
+      const input = $$('[data-trigger-field="mediaUrl"]').find((item) => item.dataset.triggerId === trigger.id);
+      if (input) {
+        input.value = trigger.mediaUrl;
+        updateTriggerSourceValidity(input);
+      }
       setDirty(true);
     };
   });
@@ -1442,10 +1472,18 @@ function triggerTemplate(trigger) {
         Channel IDs
         <input data-trigger-id="${trigger.id}" data-trigger-field="channelIds" value="${escapeAttr((trigger.channelIds || []).join(", "))}" placeholder="empty = all category channels">
       </label>
-      <label>
-        Media URL
-        <input data-trigger-id="${trigger.id}" data-trigger-field="mediaUrl" value="${escapeAttr(trigger.mediaUrl || "")}" placeholder="https://...gif">
-      </label>
+      <div class="trigger-source-field">
+        <label>
+          Media source
+          <input data-trigger-id="${trigger.id}" data-trigger-field="mediaUrl" value="${escapeAttr(trigger.mediaUrl || "")}" placeholder="{random}, {random:image}, {random:video}, or https://...">
+        </label>
+        <span class="field-help">Use a direct image/GIF URL, or pull from the configured Drive folder at trigger time.</span>
+        <span class="trigger-token-row" aria-label="Random media shortcuts">
+          <button type="button" class="trigger-token" data-trigger-id="${trigger.id}" data-trigger-random="{random}">{random}</button>
+          <button type="button" class="trigger-token" data-trigger-id="${trigger.id}" data-trigger-random="{random:image}">{random:image}</button>
+          <button type="button" class="trigger-token" data-trigger-id="${trigger.id}" data-trigger-random="{random:video}">{random:video}</button>
+        </span>
+      </div>
       <div class="top-actions">
         <label class="switch">
           <input type="checkbox" data-trigger-id="${trigger.id}" data-trigger-field="enabled" ${trigger.enabled !== false ? "checked" : ""}>

@@ -2658,3 +2658,43 @@ body.reduce-motion *::after {
     grid-template-columns: 1fr;
   }
 }
+
+/* Random Google Drive trigger tokens */
+.trigger-source-field {
+  min-width: 0;
+}
+
+.trigger-token-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.trigger-token {
+  appearance: none;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  border-radius: 999px;
+  background: rgba(103, 232, 249, 0.08);
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.46rem 0.62rem;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.trigger-token:hover,
+.trigger-token:focus-visible {
+  border-color: rgba(103, 232, 249, 0.65);
+  background: rgba(103, 232, 249, 0.16);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.trigger-source-field input[aria-invalid="true"] {
+  border-color: rgba(255, 127, 149, 0.82);
+  box-shadow: 0 0 0 3px rgba(255, 127, 149, 0.12);
+}
