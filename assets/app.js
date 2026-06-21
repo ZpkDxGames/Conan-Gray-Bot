@@ -10,6 +10,7 @@ const STORAGE = {
   density: "conan-dashboard-density",
   reduceMotion: "conan-dashboard-reduce-motion",
   proxyMigration: "conan-dashboard-proxy-migration-v1",
+  templateScheme: "conan-dashboard-template-scheme",
 };
 
 const DEFAULT_API_BASE = PUBLIC_CONFIG.preferSameOriginProxy !== false
@@ -32,6 +33,8 @@ let state = {
   refreshing: false,
   dirty: false,
   currentPage: "overview",
+  templateScheme: localStorage.getItem(STORAGE.templateScheme) || "global",
+  templateTokenTarget: null,
 };
 
 const PAGE_ALIASES = {
@@ -947,61 +950,111 @@ function ensureTemplateProfiles() {
   state.config.media.videoAltTextTemplate ??= "{filename} · requested by {actor}";
 }
 
-function templateProfileCard(profile, index) {
+function activeTemplateProfile() {
+  const valid = TEMPLATE_PROFILES.some(({ key }) => key === state.templateScheme);
+  if (!valid) state.templateScheme = "global";
+  return TEMPLATE_PROFILES.find(({ key }) => key === state.templateScheme) || TEMPLATE_PROFILES[0];
+}
+
+function templateProfileEditor(profile) {
   const path = `messageTemplates.${profile.key}`;
   const isGlobal = profile.key === "global";
+  const stored = state.config.messageTemplates?.[profile.key] || {};
+  const inherited = !isGlobal && stored.inheritGlobal === true;
+  const disabled = inherited ? " disabled" : "";
   const mediaExtras = profile.key === "media" ? `
-    <div class="template-profile-divider"></div>
-    <div class="form-grid template-media-options">
-      <label>Video presentation
-        <select data-bind="media.videoDisplayMode">
-          <option value="inline_card">Inline media card</option>
-          <option value="embed_attachment">Embed + native attachment</option>
-        </select>
-      </label>
-      <label>Video alt-text template<input data-bind="media.videoAltTextTemplate" placeholder="{filename} · requested by {actor}"></label>
-    </div>
-    <p class="hint">Inline media cards use Discord Components V2 so MP4 files render inside the styled message. The bot falls back to an embed and native attachment if Discord rejects the layout.</p>
+    <section class="template-editor-section">
+      <div class="template-editor-section-head"><div><span class="eyebrow">Media player</span><h4>Video presentation</h4></div></div>
+      <div class="form-grid template-media-options">
+        <label>Video presentation
+          <select data-bind="media.videoDisplayMode"${disabled}>
+            <option value="inline_card">Inline media card</option>
+            <option value="embed_attachment">Embed + native attachment</option>
+          </select>
+        </label>
+        <label>Video alt-text template<input data-bind="media.videoAltTextTemplate" placeholder="{filename} · requested by {actor}"${disabled}></label>
+      </div>
+      <p class="hint">Inline media cards use Discord Components V2. The bot falls back to an embed and native attachment when needed.</p>
+    </section>
   ` : "";
   return `
-    <details class="card template-profile-card" ${isGlobal || index === 1 ? "open" : ""}>
-      <summary class="template-profile-summary">
-        <span>
-          <span class="eyebrow">${isGlobal ? "Base profile" : "System profile"}</span>
-          <strong>${escapeHtml(profile.name)}</strong>
-          <small>${escapeHtml(profile.description)}</small>
-        </span>
-        ${icon("chevron-down")}
-      </summary>
-      <div class="template-profile-body">
-        <div class="toggle-grid template-toggle-grid">
-          ${isGlobal ? "" : `<label class="inline-toggle"><span>Inherit global profile</span><span class="switch"><input data-bind="${path}.inheritGlobal" type="checkbox"><span></span></span></label>`}
-          <label class="inline-toggle"><span>Use rich embeds/cards</span><span class="switch"><input data-bind="${path}.useEmbed" type="checkbox"><span></span></span></label>
-          <label class="inline-toggle"><span>Show requester</span><span class="switch"><input data-bind="${path}.showRequester" type="checkbox"><span></span></span></label>
-          <label class="inline-toggle"><span>Show timestamp</span><span class="switch"><input data-bind="${path}.showTimestamp" type="checkbox"><span></span></span></label>
-          <label class="inline-toggle"><span>Show detail fields</span><span class="switch"><input data-bind="${path}.showFields" type="checkbox"><span></span></span></label>
-        </div>
-        <div class="form-grid template-style-grid">
-          <label>Accent color<input data-bind="${path}.color" placeholder="Inherit semantic/accent color"></label>
-          <label>Thumbnail URL<input data-bind="${path}.thumbnailUrl" placeholder="https://..."></label>
-          <label>Author line<input data-bind="${path}.authorTemplate" placeholder="Requested by {actor}"></label>
-          <label>Title template<input data-bind="${path}.titleTemplate" placeholder="{title}"></label>
-        </div>
-        <label>Description template<textarea data-bind="${path}.descriptionTemplate" rows="4" placeholder="{description}"></textarea></label>
-        <label>Footer template<textarea data-bind="${path}.footerTemplate" rows="3" placeholder="{footer}"></textarea></label>
-        ${isGlobal ? "" : `<p class="hint">When inheritance is enabled, this system uses the live Global defaults. Turn it off to activate the values stored in this profile.</p>`}
-        ${mediaExtras}
+    ${isGlobal ? "" : `
+      <div class="template-inheritance-control">
+        <div><strong>Use Global defaults</strong><span>Keep this scheme synchronized with the base profile.</span></div>
+        <span class="switch"><input data-bind="${path}.inheritGlobal" type="checkbox"><span></span></span>
       </div>
-    </details>`;
+      ${inherited ? `<div class="template-inherited-notice">This scheme is currently previewing Global defaults. Turn inheritance off to customize it independently.</div>` : ""}
+    `}
+    <section class="template-editor-section">
+      <div class="template-editor-section-head"><div><span class="eyebrow">Presentation</span><h4>Layout and visibility</h4></div></div>
+      <div class="toggle-grid template-toggle-grid">
+        <label class="inline-toggle"><span>Use rich embeds/cards</span><span class="switch"><input data-bind="${path}.useEmbed" type="checkbox"${disabled}><span></span></span></label>
+        <label class="inline-toggle"><span>Show requester</span><span class="switch"><input data-bind="${path}.showRequester" type="checkbox"${disabled}><span></span></span></label>
+        <label class="inline-toggle"><span>Show timestamp</span><span class="switch"><input data-bind="${path}.showTimestamp" type="checkbox"${disabled}><span></span></span></label>
+        <label class="inline-toggle"><span>Show detail fields</span><span class="switch"><input data-bind="${path}.showFields" type="checkbox"${disabled}><span></span></span></label>
+      </div>
+    </section>
+    <section class="template-editor-section">
+      <div class="template-editor-section-head"><div><span class="eyebrow">Content</span><h4>Message copy</h4></div></div>
+      <div class="form-grid template-content-grid">
+        <label>Author line<input data-template-text-field data-bind="${path}.authorTemplate" placeholder="Requested by {actor}"${disabled}></label>
+        <label>Title template<input data-template-text-field data-bind="${path}.titleTemplate" placeholder="{title}"${disabled}></label>
+        <label class="form-span-two">Description template<textarea data-template-text-field data-bind="${path}.descriptionTemplate" rows="5" placeholder="{description}"${disabled}></textarea></label>
+        <label class="form-span-two">Footer template<textarea data-template-text-field data-bind="${path}.footerTemplate" rows="3" placeholder="{footer}"${disabled}></textarea></label>
+      </div>
+    </section>
+    <section class="template-editor-section">
+      <div class="template-editor-section-head"><div><span class="eyebrow">Appearance</span><h4>Color and artwork</h4></div></div>
+      <div class="form-grid template-style-grid">
+        <label>Accent color<div class="template-color-input"><input data-bind="${path}.color" placeholder="Inherit semantic/accent color"${disabled}><span id="template-color-swatch" aria-hidden="true"></span></div></label>
+        <label>Thumbnail URL<input data-bind="${path}.thumbnailUrl" placeholder="https://..."${disabled}></label>
+      </div>
+    </section>
+    ${mediaExtras}`;
 }
 
 function renderTemplateProfiles() {
-  const root = $("#template-profile-list");
+  const root = $("#template-profile-editor");
+  const selector = $("#template-scheme-selector");
   if (!root || !state.config) return;
   ensureTemplateProfiles();
-  root.innerHTML = TEMPLATE_PROFILES.map(templateProfileCard).join("");
+  const profile = activeTemplateProfile();
+  if (selector) {
+    selector.value = profile.key;
+    updateSelectShell(selector);
+  }
+  root.innerHTML = templateProfileEditor(profile);
+  setText("#template-editor-name", profile.name);
+  setText("#template-editor-description", profile.description);
+  setText("#template-preview-profile-label", profile.name);
+  const inherited = profile.key !== "global" && state.config.messageTemplates?.[profile.key]?.inheritGlobal === true;
+  const status = $("#template-scheme-status");
+  const statusText = $("#template-scheme-status-text");
+  if (status) status.classList.toggle("is-inherited", inherited);
+  if (statusText) statusText.textContent = profile.key === "global" ? "Base profile" : inherited ? "Using Global defaults" : "Custom profile";
+  root.querySelectorAll("[data-template-text-field]").forEach((field) => {
+    field.addEventListener("focus", () => { state.templateTokenTarget = field; });
+  });
 }
 
+function insertTemplateToken(token) {
+  let target = state.templateTokenTarget;
+  if (!target || !target.isConnected || target.disabled) {
+    target = $("#template-profile-editor textarea[data-template-text-field]:not(:disabled)")
+      || $("#template-profile-editor input[data-template-text-field]:not(:disabled)");
+  }
+  if (!target) {
+    toast("Turn off Global inheritance before editing this scheme.");
+    return;
+  }
+  const start = Number.isInteger(target.selectionStart) ? target.selectionStart : target.value.length;
+  const end = Number.isInteger(target.selectionEnd) ? target.selectionEnd : start;
+  target.value = `${target.value.slice(0, start)}${token}${target.value.slice(end)}`;
+  target.dispatchEvent(new Event("input", { bubbles: true }));
+  target.focus();
+  const cursor = start + token.length;
+  if (target.setSelectionRange) target.setSelectionRange(cursor, cursor);
+}
 
 function formatTemplateSample(template, values, fallback = "") {
   const source = String(template ?? fallback);
@@ -1011,8 +1064,7 @@ function formatTemplateSample(template, values, fallback = "") {
 function renderTemplatePreview() {
   if (!state.config) return;
   ensureTemplateProfiles();
-  const select = $("#template-preview-system");
-  const key = select?.value || "global";
+  const key = activeTemplateProfile().key;
   const globalProfile = state.config.messageTemplates?.global || {};
   const selectedProfile = state.config.messageTemplates?.[key] || globalProfile;
   const profile = key !== "global" && selectedProfile.inheritGlobal ? globalProfile : selectedProfile;
@@ -1040,7 +1092,7 @@ function renderTemplatePreview() {
     actor: "Alex",
     user: "Alex",
     provider: "gemini",
-    source: "Template preview",
+    source: "Conan control room",
     kind: key,
     system: key,
     filename: "2026-06-21-memory.mp4",
@@ -1058,8 +1110,19 @@ function renderTemplatePreview() {
     media: "#38bdf8", trigger: "#38bdf8", game: "#f472b6",
   };
   const color = String(profile.color || semantic[key] || appearance.accentColor || "#67e8f9");
+  const validColor = /^#[0-9a-f]{6}$/i.test(color) || /^#[0-9a-f]{3}$/i.test(color) ? color : "#67e8f9";
   const preview = $("#template-live-preview");
-  if (preview) preview.style.borderLeftColor = /^#[0-9a-f]{3,6}$/i.test(color) ? color : "#67e8f9";
+  const plain = $("#template-plain-preview");
+  const swatch = $("#template-color-swatch");
+  if (preview) {
+    preview.style.borderLeftColor = validColor;
+    preview.hidden = profile.useEmbed === false;
+  }
+  if (plain) {
+    plain.hidden = profile.useEmbed !== false;
+    plain.textContent = [title, description, footer].filter(Boolean).join("\n\n");
+  }
+  if (swatch) swatch.style.backgroundColor = validColor;
   setText("#template-preview-title", title || baseTitle);
   setText("#template-preview-description", description || baseDescription);
   setText("#template-preview-footer", footer || footerBase);
@@ -1067,9 +1130,20 @@ function renderTemplatePreview() {
   const authorEl = $("#template-preview-author");
   const footerEl = $("#template-preview-footer");
   const fieldsEl = $("#template-live-preview .discord-template-fields");
+  const timestampEl = $("#template-preview-timestamp");
+  const thumbnailEl = $("#template-preview-thumbnail");
+  const mediaEl = $("#template-preview-media");
   if (authorEl) authorEl.hidden = profile.showRequester === false;
   if (footerEl) footerEl.hidden = !footer;
   if (fieldsEl) fieldsEl.hidden = profile.showFields === false;
+  if (timestampEl) timestampEl.hidden = profile.showTimestamp === false;
+  if (thumbnailEl) {
+    const url = String(profile.thumbnailUrl || "").trim();
+    thumbnailEl.hidden = !/^https?:\/\//i.test(url);
+    if (!thumbnailEl.hidden) thumbnailEl.src = url;
+    else thumbnailEl.removeAttribute("src");
+  }
+  if (mediaEl) mediaEl.hidden = key !== "media" || state.config.media?.videoDisplayMode !== "inline_card";
 }
 
 function bindConfigToInputs() {
@@ -1084,6 +1158,13 @@ function bindConfigToInputs() {
       if (path === "ai.replyStyle") state.config.ai.embedReplies = nextValue === "embed";
       if (path.startsWith("appearance.") || path.startsWith("presentation.")) renderEmbedPreview();
       if (path.startsWith("messageTemplates.") || path.startsWith("appearance.") || path.startsWith("media.video")) renderTemplatePreview();
+      if (path.startsWith("messageTemplates.") && path.endsWith(".inheritGlobal")) {
+        closeSelectPortal();
+        renderTemplateProfiles();
+        bindConfigToInputs();
+        enhanceSelects();
+        renderTemplatePreview();
+      }
       if (path === "ai.providerOrder") renderProviders();
       setDirty(true);
     };
@@ -1887,16 +1968,24 @@ function init() {
   const mediaSearch = $("#media-search-filter");
   const commandSearch = $("#command-search-input");
   const commandCategory = $("#command-category-filter");
-  const templatePreviewSystem = $("#template-preview-system");
+  const templateSchemeSelector = $("#template-scheme-selector");
   if (mediaType) mediaType.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaChannel) mediaChannel.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaSearch) mediaSearch.oninput = () => renderMedia(state.media);
   if (commandSearch) commandSearch.oninput = renderCommands;
   if (commandCategory) commandCategory.onchange = renderCommands;
-  if (templatePreviewSystem) templatePreviewSystem.onchange = () => {
-    updateSelectShell(templatePreviewSystem);
+  if (templateSchemeSelector) templateSchemeSelector.onchange = () => {
+    state.templateScheme = templateSchemeSelector.value;
+    localStorage.setItem(STORAGE.templateScheme, state.templateScheme);
+    closeSelectPortal();
+    renderTemplateProfiles();
+    bindConfigToInputs();
+    enhanceSelects();
     renderTemplatePreview();
   };
+  $$('[data-template-token]').forEach((button) => {
+    button.onclick = () => insertTemplateToken(button.dataset.templateToken || "");
+  });
 
   $$('[data-test-drive]').forEach((button) => {
     button.onclick = () => testDrive().catch((error) => toast(error.message));

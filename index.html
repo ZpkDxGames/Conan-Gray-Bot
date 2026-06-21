@@ -8,7 +8,7 @@
 <link href="./assets/logo.webp" rel="icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="shortcut icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="apple-touch-icon"/>
-<link href="/assets/styles.css?v=20260621.2" rel="stylesheet"/>
+<link href="/assets/styles.css?v=20260621.3" rel="stylesheet"/>
 </head>
 <body>
 <div class="aurora aurora-one"></div>
@@ -409,38 +409,89 @@
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
 <h3>Message template studio</h3>
-<p class="muted">Give AI chat, commands, games, media, triggers, admin actions, and status feedback their own titles, body wrappers, colors, thumbnails, author lines, and footer styles.</p>
+<p class="muted">Choose one response scheme, edit its presentation, and watch the Discord-style preview update beside it.</p>
 </div>
 </div>
 <div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/info.svg')"></span><div><strong>Templates preserve exact results.</strong><span>Game outcomes and command facts are still calculated by backend logic. Templates only control presentation around those facts.</span></div></div>
-<article class="card template-guide-card">
-<div class="card-head"><div><p class="eyebrow">Available variables</p><h3>Reusable placeholders</h3></div></div>
-<p class="hint placeholder-guide"><code>{title}</code> <code>{description}</code> <code>{response}</code> <code>{footer}</code> <code>{actor}</code> <code>{user}</code> <code>{provider}</code> <code>{source}</code> <code>{kind}</code> <code>{system}</code> <code>{filename}</code> <code>{mediaType}</code> <code>{size}</code> <code>{channel}</code> <code>{guild}</code></p>
-</article>
-<article class="card template-live-preview-card">
-<div class="card-head"><div><p class="eyebrow">Live sample</p><h3>Template preview</h3></div>
-<label class="compact-select-label">System<select id="template-preview-system">
+<article class="card template-scheme-toolbar">
+<div class="template-scheme-copy">
+<p class="eyebrow">Template scheme</p>
+<h3>Select what you want to customize</h3>
+<p class="hint">The selected scheme controls both the editor and the live preview.</p>
+</div>
+<div class="template-scheme-controls">
+<label class="template-scheme-select">Message scheme
+<select id="template-scheme-selector">
 <option value="global">Global defaults</option>
 <option value="ai">AI conversation</option>
-<option value="command">Commands</option>
+<option value="command">Commands and functions</option>
 <option value="game">Games</option>
 <option value="media">Media</option>
-<option value="trigger">Triggers</option>
+<option value="trigger">Media triggers</option>
 <option value="admin">Administration</option>
-<option value="success">Success</option>
+<option value="success">Success feedback</option>
 <option value="warning">Warnings</option>
 <option value="error">Errors</option>
-<option value="info">Information</option>
-</select></label></div>
-<div class="discord-template-preview" id="template-live-preview">
-<div class="discord-template-author" id="template-preview-author">Requested by Alex</div>
-<strong id="template-preview-title">Command result</strong>
-<p id="template-preview-description">A sample response appears here with exact facts preserved.</p>
-<div class="discord-template-fields"><span><b>Result</b>Deterministic</span><span><b>Source</b>Conan control room</span></div>
-<small id="template-preview-footer">Conan Gray Bot • soft-pop control room</small>
+<option value="info">General information</option>
+</select>
+</label>
+<div class="template-scheme-status" id="template-scheme-status"><span class="status-dot"></span><span id="template-scheme-status-text">Custom profile</span></div>
 </div>
 </article>
-<div class="template-profile-list" id="template-profile-list"></div>
+<div class="template-studio-layout">
+<article class="card template-editor-panel">
+<div class="card-head template-editor-heading">
+<div><p class="eyebrow">Editor</p><h3 id="template-editor-name">Global defaults</h3><p class="hint" id="template-editor-description">The baseline used by every system.</p></div>
+</div>
+<div id="template-profile-editor"></div>
+</article>
+<aside class="template-preview-stack">
+<article class="card template-live-preview-card">
+<div class="card-head"><div><p class="eyebrow">Live preview</p><h3>Discord message</h3></div><span class="template-preview-badge" id="template-preview-profile-label">Global defaults</span></div>
+<div class="discord-message-stage">
+<div class="discord-message-header">
+<img alt="" class="discord-message-avatar" src="/assets/logo.webp"/>
+<div><div class="discord-message-name">Conan Gray Bot <span>APP</span></div><small>Today at 4:02 PM</small></div>
+</div>
+<div class="discord-plain-preview" id="template-plain-preview" hidden></div>
+<div class="discord-template-preview" id="template-live-preview">
+<div class="discord-template-author" id="template-preview-author">Requested by Alex</div>
+<div class="discord-template-body-row">
+<div class="discord-template-copy">
+<strong id="template-preview-title">Command result</strong>
+<p id="template-preview-description">A sample response appears here with exact facts preserved.</p>
+</div>
+<img alt="" class="discord-template-thumbnail" id="template-preview-thumbnail" hidden/>
+</div>
+<div class="discord-template-fields"><span><b>Result</b>Deterministic</span><span><b>Source</b>Conan control room</span></div>
+<div class="discord-template-media" id="template-preview-media" hidden><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/video.svg')"></span><div><strong>Inline media player</strong><small>MP4 or image preview</small></div></div>
+<div class="discord-template-footer-row"><small id="template-preview-footer">Conan Gray Bot • soft-pop control room</small><small id="template-preview-timestamp">Today at 4:02 PM</small></div>
+</div>
+</div>
+</article>
+<article class="card template-token-card">
+<div class="card-head"><div><p class="eyebrow">Quick insert</p><h3>Template variables</h3></div></div>
+<p class="hint">Focus a title, author, description, or footer field, then select a variable to insert it at the cursor.</p>
+<div class="template-token-grid">
+<button type="button" data-template-token="{title}"><code>{title}</code></button>
+<button type="button" data-template-token="{description}"><code>{description}</code></button>
+<button type="button" data-template-token="{response}"><code>{response}</code></button>
+<button type="button" data-template-token="{footer}"><code>{footer}</code></button>
+<button type="button" data-template-token="{actor}"><code>{actor}</code></button>
+<button type="button" data-template-token="{user}"><code>{user}</code></button>
+<button type="button" data-template-token="{provider}"><code>{provider}</code></button>
+<button type="button" data-template-token="{source}"><code>{source}</code></button>
+<button type="button" data-template-token="{kind}"><code>{kind}</code></button>
+<button type="button" data-template-token="{system}"><code>{system}</code></button>
+<button type="button" data-template-token="{filename}"><code>{filename}</code></button>
+<button type="button" data-template-token="{mediaType}"><code>{mediaType}</code></button>
+<button type="button" data-template-token="{size}"><code>{size}</code></button>
+<button type="button" data-template-token="{channel}"><code>{channel}</code></button>
+<button type="button" data-template-token="{guild}"><code>{guild}</code></button>
+</div>
+</article>
+</aside>
+</div>
 </section>
 <section class="page" data-page-panel="ai-providers">
 <div class="page-intro">
@@ -1052,6 +1103,6 @@
 </section>
 </main>
 <script src="/assets/config.js?v=20260621.1"></script>
-<script src="/assets/app.js?v=20260621.2"></script>
+<script src="/assets/app.js?v=20260621.3"></script>
 </body>
 </html>
