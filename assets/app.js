@@ -88,6 +88,13 @@ const TEMPLATE_PROFILES = [
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+function setText(selector, value, root = document) {
+  const element = $(selector, root);
+  if (!element) return null;
+  element.textContent = value == null ? "" : String(value);
+  return element;
+}
+
 function icon(name) {
   return `<span class="icon" style="--icon: url('/assets/icons/${escapeAttr(name)}.svg')" aria-hidden="true"></span>`;
 }
@@ -608,10 +615,6 @@ function renderMedia(data = state.media) {
     ? allItems.filter((item) => [item.name, item.originalName, item.authorName, item.channelName, item.channelId]
         .some((value) => String(value || "").toLowerCase().includes(query)))
     : allItems;
-  const setText = (selector, value) => {
-    const element = $(selector);
-    if (element) element.textContent = value;
-  };
   setText("#media-file-count", String(stats.files || 0));
   setText("#media-image-count", String(stats.images || 0));
   setText("#media-video-count", String(stats.videos || 0));
