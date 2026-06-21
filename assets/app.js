@@ -465,10 +465,13 @@ function renderDriveStatus(mediaData = state.media) {
   const drive = state.health?.googleDrive || {};
   const mediaDrive = mediaData?.drive || {};
   const folderId = String(state.config?.media?.googleDriveFolderId || mediaDrive.folderId || "").trim();
-  const ready = Boolean(drive.configured && folderId);
+  const aligned = drive.projectAligned !== false && mediaDrive.projectAligned !== false;
+  const ready = Boolean(drive.configured && aligned && folderId);
   const status = $("#drive-status-pill");
   if (status) {
-    status.textContent = !drive.configured ? "Drive credentials missing" : folderId ? "Drive ready to test" : "Choose a Drive folder";
+    status.textContent = !drive.configured
+      ? aligned ? "Drive credentials missing" : "Drive project mismatch"
+      : folderId ? "Drive ready to test" : "Choose a Drive folder";
     status.classList.toggle("ok", ready);
     status.classList.toggle("warn", !ready);
   }
@@ -479,7 +482,16 @@ function renderDriveStatus(mediaData = state.media) {
   const settingsEmail = $("#settings-drive-service-account");
   if (settingsEmail) settingsEmail.textContent = email;
   const credentialState = $("#settings-drive-credential-state");
-  if (credentialState) credentialState.textContent = drive.configured ? "Backend credentials loaded" : "Credentials missing";
+  if (credentialState) credentialState.textContent = drive.configured ? "Service-account OAuth loaded" : "Credentials missing";
+  const credentialProject = $("#drive-credential-project");
+  if (credentialProject) credentialProject.textContent = drive.credentialProjectId || mediaDrive.credentialProjectId || "Not configured";
+  const authMode = $("#drive-auth-mode");
+  if (authMode) authMode.textContent = (drive.authMode || mediaDrive.authMode || "service_account").replaceAll("_", " ");
+  const oauthProject = $("#drive-oauth-project");
+  if (oauthProject) {
+    const project = drive.oauthClientProjectId || mediaDrive.oauthClientProjectId || "Not configured";
+    oauthProject.textContent = project === "Not configured" ? project : `${project} · inactive`;
+  }
   const folderSummary = $("#drive-folder-summary");
   if (folderSummary) folderSummary.textContent = folderId ? compactId(folderId) : "Not selected";
 }
@@ -495,12 +507,14 @@ function renderDriveDiagnostic(detail = state.driveDiagnostic) {
   $("#drive-diagnostic-title").textContent = success ? "Google Drive connection ready" : "Google Drive needs attention";
   $("#drive-diagnostic-message").textContent = normalized.message || (success ? "The folder is accessible and ready for media." : "The connection test failed.");
   $("#drive-diagnostic-code").textContent = success ? "connected" : normalized.code || normalized.reason || "drive_error";
-  $("#drive-diagnostic-project").textContent = normalized.projectId || "Not reported";
+  $("#drive-diagnostic-project").textContent = normalized.credentialProjectId || normalized.expectedProjectId || normalized.projectId || "Not reported";
   $("#drive-diagnostic-account").textContent = normalized.serviceAccountEmail || state.media?.drive?.serviceAccountEmail || "Not configured";
   $("#drive-diagnostic-next").textContent = success
     ? "Use /media or archive a Discord attachment"
     : normalized.code === "drive_api_disabled"
-      ? "Enable Google Drive API, wait a few minutes, then retest"
+      ? "Enable Google Drive API in the service-account project, wait a few minutes, then retest"
+      : normalized.code === "credential_project_mismatch"
+        ? "Remove GOOGLE_DRIVE_API_KEY and redeploy this service-account-only build"
       : normalized.code === "folder_permission_denied" || normalized.code === "folder_not_found"
         ? "Share the folder with the service account as Editor"
         : "Check the backend logs and retest";

@@ -499,6 +499,9 @@
 <div><small>Folder</small><strong id="drive-folder-summary">Not selected</strong></div>
 <div><small>Service account to invite</small><strong id="settings-drive-service-account">Not configured</strong></div>
 <div><small>Credential source</small><strong id="settings-drive-credential-state">Checking</strong></div>
+<div><small>Credential project</small><strong id="drive-credential-project">Checking</strong></div>
+<div><small>Active authentication</small><strong id="drive-auth-mode">Checking</strong></div>
+<div><small>Registered OAuth project</small><strong id="drive-oauth-project">Not configured</strong></div>
 </div>
 </article>
 <article class="card drive-diagnostic-card" id="drive-diagnostic-card" hidden>
@@ -513,7 +516,7 @@
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Access checklist</p><h3>Private credentials, public controls</h3></div></div>
-<p class="muted">Credentials remain in backend environment variables and are never stored in the dashboard configuration.</p>
+<p class="muted">The service-account credential remains in backend environment variables and is never stored in the dashboard configuration. No Drive API key is used for private-folder access.</p>
 <div class="checklist">
 <div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Enable the Google Drive API for the service-account project.</span></div>
 <div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Share the destination folder with the service-account email as Editor.</span></div>
