@@ -487,7 +487,7 @@
 <div class="page-intro-copy">
 <p class="eyebrow">Media</p>
 <h3>Google Drive connection</h3>
-<p class="muted">Select the destination folder, verify service-account access, and test the connection.</p>
+<p class="muted">Select the destination folder, verify the active Drive identity, and test the connection. Firebase and Drive may use different Google accounts.</p>
 </div>
 <div class="page-intro-actions"><span class="hero-pill" id="drive-status-pill">Drive status unknown</span></div>
 </div>
@@ -495,9 +495,9 @@
 <div class="card-head"><div><p class="eyebrow">Destination</p><h3>Drive folder</h3></div><button class="ghost" data-test-drive="" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span>Save &amp; test folder</span></button></div>
 <label>Google Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
 <div class="drive-summary">
-<div><small>Service account</small><strong id="drive-service-account">Not configured</strong></div>
+<div><small>Authenticated Drive identity</small><strong id="drive-service-account">Not configured</strong></div>
 <div><small>Folder</small><strong id="drive-folder-summary">Not selected</strong></div>
-<div><small>Service account to invite</small><strong id="settings-drive-service-account">Not configured</strong></div>
+<div><small>Folder access identity</small><strong id="settings-drive-service-account">Not configured</strong></div>
 <div><small>Credential source</small><strong id="settings-drive-credential-state">Checking</strong></div>
 <div><small>Credential project</small><strong id="drive-credential-project">Checking</strong></div>
 <div><small>Active authentication</small><strong id="drive-auth-mode">Checking</strong></div>
@@ -510,17 +510,17 @@
 <div class="drive-summary">
 <div><small>Error code</small><strong id="drive-diagnostic-code">—</strong></div>
 <div><small>Google Cloud project</small><strong id="drive-diagnostic-project">—</strong></div>
-<div><small>Service account</small><strong id="drive-diagnostic-account">—</strong></div>
+<div><small>Authenticated identity</small><strong id="drive-diagnostic-account">—</strong></div>
 <div><small>Next step</small><strong id="drive-diagnostic-next">Run the test again after fixing access</strong></div>
 </div>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Access checklist</p><h3>Private credentials, public controls</h3></div></div>
-<p class="muted">The service-account credential remains in backend environment variables and is never stored in the dashboard configuration. No Drive API key is used for private-folder access.</p>
+<p class="muted">Drive credentials remain in backend environment variables and are never stored in browser configuration. A folder may be owned by a different Google account than Firebase; the active Drive identity only needs permission to access it.</p>
 <div class="checklist">
-<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Enable the Google Drive API for the service-account project.</span></div>
-<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Share the destination folder with the service-account email as Editor.</span></div>
-<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Save the folder ID, then run the connection test.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span><strong>Service account:</strong> enable Drive API in that service account's Cloud project and use a Shared Drive for uploads, or explicitly share supported content with it.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span><strong>Google-user OAuth:</strong> authorize the human account that owns the My Drive folder using a client secret and refresh token.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Never use a Drive API key for private-folder authentication. Save the folder ID, then run the connection test.</span></div>
 </div>
 </article>
 </section>

@@ -47,7 +47,7 @@ const PAGE_META = {
   "ai-providers": { section: "AI Studio", title: "Providers", description: "Fallback priority and provider availability." },
   "media-library": { section: "Media", title: "Library", description: "Browse and manage archived Discord photos and videos." },
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
-  "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, service-account access, and connection testing." },
+  "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, active Drive identity, and connection testing." },
   triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs and response text." },
   commands: { section: "Discord", title: "Command setup", description: "Control runtime availability and publish the exact Discord slash-command tree." },
   games: { section: "Games", title: "Game hub", description: "Global limits and links to every game configuration." },
@@ -476,21 +476,24 @@ function renderDriveStatus(mediaData = state.media) {
     status.classList.toggle("warn", !ready);
   }
 
-  const email = drive.serviceAccountEmail || mediaDrive.serviceAccountEmail || "Not configured";
+  const authModeValue = drive.authMode || mediaDrive.authMode || "service_account";
+  const identityLabel = drive.identityLabel || mediaDrive.identityLabel || (authModeValue === "oauth_user" ? "Google user OAuth" : "Service account");
+  const email = drive.principalEmail || mediaDrive.principalEmail || drive.serviceAccountEmail || mediaDrive.serviceAccountEmail || "Not configured";
   const serviceAccount = $("#drive-service-account");
   if (serviceAccount) serviceAccount.textContent = email;
   const settingsEmail = $("#settings-drive-service-account");
   if (settingsEmail) settingsEmail.textContent = email;
   const credentialState = $("#settings-drive-credential-state");
-  if (credentialState) credentialState.textContent = drive.configured ? "Service-account OAuth loaded" : "Credentials missing";
+  if (credentialState) credentialState.textContent = drive.configured ? `${identityLabel} loaded` : `${identityLabel} incomplete`;
   const credentialProject = $("#drive-credential-project");
   if (credentialProject) credentialProject.textContent = drive.credentialProjectId || mediaDrive.credentialProjectId || "Not configured";
   const authMode = $("#drive-auth-mode");
-  if (authMode) authMode.textContent = (drive.authMode || mediaDrive.authMode || "service_account").replaceAll("_", " ");
+  if (authMode) authMode.textContent = identityLabel;
   const oauthProject = $("#drive-oauth-project");
   if (oauthProject) {
     const project = drive.oauthClientProjectId || mediaDrive.oauthClientProjectId || "Not configured";
-    oauthProject.textContent = project === "Not configured" ? project : `${project} · inactive`;
+    const active = authModeValue === "oauth_user";
+    oauthProject.textContent = project === "Not configured" ? project : `${project} · ${active ? "active" : "registered"}`;
   }
   const folderSummary = $("#drive-folder-summary");
   if (folderSummary) folderSummary.textContent = folderId ? compactId(folderId) : "Not selected";
@@ -508,15 +511,21 @@ function renderDriveDiagnostic(detail = state.driveDiagnostic) {
   $("#drive-diagnostic-message").textContent = normalized.message || (success ? "The folder is accessible and ready for media." : "The connection test failed.");
   $("#drive-diagnostic-code").textContent = success ? "connected" : normalized.code || normalized.reason || "drive_error";
   $("#drive-diagnostic-project").textContent = normalized.credentialProjectId || normalized.expectedProjectId || normalized.projectId || "Not reported";
-  $("#drive-diagnostic-account").textContent = normalized.serviceAccountEmail || state.media?.drive?.serviceAccountEmail || "Not configured";
+  $("#drive-diagnostic-account").textContent = normalized.principalEmail || normalized.serviceAccountEmail || state.media?.drive?.principalEmail || state.media?.drive?.serviceAccountEmail || "Not configured";
   $("#drive-diagnostic-next").textContent = success
     ? "Use /media or archive a Discord attachment"
     : normalized.code === "drive_api_disabled"
-      ? "Enable Google Drive API in the service-account project, wait a few minutes, then retest"
+      ? "Enable Google Drive API in the active credential project, wait a few minutes, then retest"
+      : normalized.code === "drive_oauth_incomplete"
+        ? "Complete Google consent locally, add the generated refresh token to the private environment, then restart"
+      : normalized.code === "drive_credentials_missing"
+        ? "Configure a dedicated Drive credential; Firebase fallback is disabled unless explicitly enabled"
       : normalized.code === "credential_project_mismatch"
-        ? "Remove GOOGLE_DRIVE_API_KEY and redeploy this service-account-only build"
+        ? "Align GOOGLE_DRIVE_EXPECTED_PROJECT_ID with the active Drive credential project"
+      : normalized.code === "drive_storage_unavailable"
+        ? "Use Google-user OAuth for My Drive, or upload into a Google Workspace Shared Drive"
       : normalized.code === "folder_permission_denied" || normalized.code === "folder_not_found"
-        ? "Share the folder with the service account as Editor"
+        ? "Share the folder with the authenticated Drive identity and grant edit access"
         : "Check the backend logs and retest";
   const action = $("#drive-diagnostic-action");
   if (action) {
