@@ -66,7 +66,7 @@ const PAGE_META = {
   "admin-permissions": { section: "Administration", title: "Permissions", description: "Role-gated commands and admin feedback messages." },
   "admin-lifecycle": { section: "Administration", title: "Lifecycle", description: "Start, restart, stop, pause, or resume the bot." },
   "admin-memory": { section: "Administration", title: "Memory tools", description: "Inspect and clear channel or server branch memory." },
-  "admin-presence": { section: "Administration", title: "Presence", description: "Discord status, activity type, and activity text." },
+  "admin-presence": { section: "Administration", title: "Presence", description: "Rotate multiple Discord statuses and activities on a safe schedule." },
   appearance: { section: "System", title: "Appearance", description: "Discord embed styling and local dashboard preferences." },
   logs: { section: "System", title: "Logs", description: "Recent backend events and configuration activity." },
 };
@@ -450,6 +450,7 @@ async function refreshAll() {
     renderCommandSyncNotice();
     renderChannelSelectors();
     renderTemplateProfiles();
+    renderPresenceEntries();
     bindConfigToInputs();
     enhanceSelects();
     renderProviders();
@@ -528,6 +529,21 @@ function renderAdminStatus() {
   const resumeButton = $("#resume-ai-btn");
   if (pauseButton) pauseButton.disabled = admin.aiEnabled === false;
   if (resumeButton) resumeButton.disabled = admin.aiEnabled !== false;
+
+  const rotation = admin.presenceRotation || state.health?.bot?.presenceRotation || {};
+  const presenceConfig = state.config?.presence || {};
+  const entries = Array.isArray(presenceConfig.entries) ? presenceConfig.entries.filter((entry) => entry?.enabled !== false) : [];
+  const rotationPill = $("#presence-rotation-status");
+  if (rotationPill) {
+    const active = Boolean(rotation.active);
+    rotationPill.textContent = active
+      ? `Rotating ${Math.max(entries.length, 2)} statuses • current ${Number(rotation.currentIndex || 0) + 1}`
+      : entries.length > 1 && presenceConfig.rotationEnabled
+        ? "Rotation will start when applied"
+        : "Static presence";
+    rotationPill.classList.toggle("ok", active);
+    rotationPill.classList.toggle("warn", !active && Boolean(presenceConfig.rotationEnabled) && entries.length > 1);
+  }
 }
 
 
@@ -1400,6 +1416,138 @@ function setAllCommands(enabled) {
   setDirty(true);
 }
 
+function ensurePresenceConfig() {
+  if (!state.config) return null;
+  state.config.presence ??= {};
+  const presence = state.config.presence;
+  presence.rotationEnabled = Boolean(presence.rotationEnabled);
+  presence.intervalSeconds = Math.max(15, Math.min(86400, Number(presence.intervalSeconds || 60)));
+  if (!Array.isArray(presence.entries) || !presence.entries.length) {
+    presence.entries = [{
+      enabled: true,
+      status: presence.status || "online",
+      activityType: presence.activityType || "listening",
+      activityText: presence.activityText || "dramatic bridge sections",
+      streamUrl: presence.streamUrl || "",
+    }];
+  }
+  presence.entries = presence.entries.slice(0, 20).map((entry) => ({
+    enabled: entry?.enabled !== false,
+    status: ["online", "idle", "dnd", "invisible"].includes(entry?.status) ? entry.status : "online",
+    activityType: ["playing", "streaming", "listening", "watching", "competing"].includes(entry?.activityType) ? entry.activityType : "listening",
+    activityText: String(entry?.activityText || "").slice(0, 128),
+    streamUrl: String(entry?.streamUrl || "").slice(0, 500),
+  }));
+  return presence;
+}
+
+function presenceEntryTemplate(entry, index, total) {
+  const streaming = entry.activityType === "streaming";
+  return `
+    <div class="presence-entry" data-presence-entry="${index}">
+      <div class="presence-entry-index" aria-label="Position ${index + 1}">${index + 1}</div>
+      <label class="presence-enabled">
+        Enabled
+        <span class="switch"><input type="checkbox" data-presence-index="${index}" data-presence-field="enabled" ${entry.enabled !== false ? "checked" : ""}><span></span></span>
+      </label>
+      <label>Status
+        <select data-presence-index="${index}" data-presence-field="status">
+          <option value="online" ${entry.status === "online" ? "selected" : ""}>Online</option>
+          <option value="idle" ${entry.status === "idle" ? "selected" : ""}>Idle</option>
+          <option value="dnd" ${entry.status === "dnd" ? "selected" : ""}>Do not disturb</option>
+          <option value="invisible" ${entry.status === "invisible" ? "selected" : ""}>Invisible</option>
+        </select>
+      </label>
+      <label>Activity type
+        <select data-presence-index="${index}" data-presence-field="activityType">
+          <option value="playing" ${entry.activityType === "playing" ? "selected" : ""}>Playing</option>
+          <option value="streaming" ${entry.activityType === "streaming" ? "selected" : ""}>Streaming</option>
+          <option value="listening" ${entry.activityType === "listening" ? "selected" : ""}>Listening</option>
+          <option value="watching" ${entry.activityType === "watching" ? "selected" : ""}>Watching</option>
+          <option value="competing" ${entry.activityType === "competing" ? "selected" : ""}>Competing</option>
+        </select>
+      </label>
+      <label class="presence-text">Activity text
+        <input maxlength="128" data-presence-index="${index}" data-presence-field="activityText" value="${escapeAttr(entry.activityText || "")}" placeholder="dramatic bridge sections">
+      </label>
+      <label class="presence-stream-url ${streaming ? "" : "is-hidden"}">Streaming URL
+        <input maxlength="500" data-presence-index="${index}" data-presence-field="streamUrl" value="${escapeAttr(entry.streamUrl || "")}" placeholder="https://twitch.tv/...">
+      </label>
+      <div class="presence-entry-actions">
+        <button class="icon-button" type="button" data-move-presence="up" data-presence-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Move status up">${icon("chevron-up")}</button>
+        <button class="icon-button" type="button" data-move-presence="down" data-presence-index="${index}" ${index === total - 1 ? "disabled" : ""} aria-label="Move status down">${icon("chevron-down")}</button>
+        <button class="icon-button danger" type="button" data-remove-presence="${index}" ${total <= 1 ? "disabled" : ""} aria-label="Remove status">${icon("trash")}</button>
+      </div>
+    </div>`;
+}
+
+function renderPresenceEntries() {
+  const presence = ensurePresenceConfig();
+  const container = $("#presence-entry-list");
+  if (!presence || !container) return;
+  container.innerHTML = presence.entries.map((entry, index) => presenceEntryTemplate(entry, index, presence.entries.length)).join("");
+
+  $$('[data-presence-field]', container).forEach((input) => {
+    input.oninput = () => {
+      const index = Number(input.dataset.presenceIndex);
+      const entry = presence.entries[index];
+      if (!entry) return;
+      const field = input.dataset.presenceField;
+      entry[field] = input.type === "checkbox" ? input.checked : input.value;
+      if (field === "activityType") {
+        renderPresenceEntries();
+        enhanceSelects();
+      }
+      setDirty(true);
+    };
+  });
+
+  $$('[data-move-presence]', container).forEach((button) => {
+    button.onclick = () => {
+      const index = Number(button.dataset.presenceIndex);
+      const direction = button.dataset.movePresence === "up" ? -1 : 1;
+      const target = index + direction;
+      if (target < 0 || target >= presence.entries.length) return;
+      [presence.entries[index], presence.entries[target]] = [presence.entries[target], presence.entries[index]];
+      renderPresenceEntries();
+      enhanceSelects();
+      setDirty(true);
+    };
+  });
+
+  $$('[data-remove-presence]', container).forEach((button) => {
+    button.onclick = () => {
+      if (presence.entries.length <= 1) return;
+      presence.entries.splice(Number(button.dataset.removePresence), 1);
+      renderPresenceEntries();
+      enhanceSelects();
+      setDirty(true);
+    };
+  });
+}
+
+function addPresenceEntry() {
+  const presence = ensurePresenceConfig();
+  if (!presence) {
+    toast("Connect the dashboard first.");
+    return;
+  }
+  if (presence.entries.length >= 20) {
+    toast("Discord presence playlists are limited to 20 entries.");
+    return;
+  }
+  presence.entries.push({
+    enabled: true,
+    status: "online",
+    activityType: "watching",
+    activityText: "the group chat spiral",
+    streamUrl: "",
+  });
+  renderPresenceEntries();
+  enhanceSelects();
+  setDirty(true);
+}
+
 function isValidTriggerMediaSource(value) {
   const source = String(value || "").trim();
   if (!source.toLowerCase().startsWith("{random")) return true;
@@ -1517,6 +1665,14 @@ async function saveConfig() {
   if (!state.config) {
     toast("Connect the dashboard first.");
     return;
+  }
+  const presence = ensurePresenceConfig();
+  const firstPresence = presence?.entries?.find((entry) => entry.enabled !== false) || presence?.entries?.[0];
+  if (presence && firstPresence) {
+    presence.status = firstPresence.status;
+    presence.activityType = firstPresence.activityType;
+    presence.activityText = firstPresence.activityText;
+    presence.streamUrl = firstPresence.streamUrl;
   }
   await api(`/api/config/${state.guildId}`, {
     method: "PUT",
@@ -1711,6 +1867,7 @@ function init() {
   click("#refresh-btn", () => refreshAll().then(() => toast("Refreshed.")).catch((error) => toast(error.message)));
   click("#save-btn", () => saveConfig().catch((error) => toast(error.message)));
   click("#add-trigger-btn", addTrigger);
+  click("#add-presence-entry-btn", addPresenceEntry);
   click("#sync-commands-btn", () => syncCommands().catch((error) => toast(error.message)));
   click("#enable-all-commands-btn", () => setAllCommands(true));
   click("#disable-all-commands-btn", () => setAllCommands(false));

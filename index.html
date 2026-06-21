@@ -196,7 +196,7 @@
 <div class="card-head"><div><p class="eyebrow">Configuration map</p><h3>Choose what to customize</h3></div></div>
 <div class="shortcut-grid">
 <button class="shortcut-card" data-page-link="ai-behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span><strong>AI behavior</strong><small>Channels, reply modes, output limits, and cooldowns.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
-<button class="shortcut-card" data-page-link="ai-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span><strong>Branch memory</strong><small>Mention-created branches, reply continuation, and reset rules.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="ai-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span><strong>Branch memory</strong><small>Shared multi-user branches, reply continuation, and reset rules.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="media-library" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span><strong>Media archive</strong><small>Browse photos and videos stored in Google Drive.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span><strong>Commands</strong><small>Enable, disable, search, and synchronize slash commands.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/games.svg')"></span><span><strong>Games</strong><small>Global rules and dedicated pages for every game.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
@@ -268,7 +268,7 @@
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
 <h3>Branch memory</h3>
-<p class="muted">A direct mention starts a clean branch; a reply to the newest bot message continues that branch.</p>
+<p class="muted">A direct mention starts a clean topic branch, then every participant shares its reply history.</p>
 </div>
 <div class="page-intro-actions"><button class="ghost" data-page-link="admin-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/trash.svg')"></span><span>Memory tools</span></button></div>
 </div>
@@ -276,10 +276,11 @@
 <div class="card-head"><div><p class="eyebrow">Branch routing</p><h3>Conversation continuity</h3></div></div>
 <div class="form-grid">
 <label>Maximum history messages per branch<input data-bind="ai.maxHistoryMessages" max="80" min="4" type="number"/></label>
-<label class="inline-toggle">@mention starts a fresh branch<span class="switch"><input data-bind="ai.mentionStartsNewBranch" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Reply continues its latest branch<span class="switch"><input data-bind="ai.replyContinuesBranch" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Share each branch across channel users<span class="switch"><input data-bind="ai.sharedChannelMemory" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">@mention starts a fresh topic branch<span class="switch"><input data-bind="ai.mentionStartsNewBranch" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Replies continue the shared branch<span class="switch"><input data-bind="ai.replyContinuesBranch" type="checkbox"/><span></span></span></label>
 </div>
-<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span>Each branch is isolated. Multiple people can talk in the same channel without importing one another’s context.</span></div>
+<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span>Branch memory is channel-shared, not user-owned. Any participant can reply to a recent user or bot message and continue the same context, while speaker names remain distinct.</span></div>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Reset behavior</p><h3>Memory reset keyword</h3></div></div>
@@ -573,7 +574,7 @@
 <div class="page-intro-copy">
 <p class="eyebrow">Media</p>
 <h3>Trigger words</h3>
-<p class="muted">Map words to direct media URLs or random files from the configured Drive folder.</p>
+<p class="muted">Map words to media URLs and optional response text.</p>
 </div>
 </div>
 <article class="card">
@@ -956,18 +957,22 @@
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/presence.svg')"></span></div>
 <div class="page-intro-copy">
 <p class="eyebrow">Administration</p>
-<h3>Discord presence</h3>
-<p class="muted">Customize the bot’s status, activity type, and activity text.</p>
+<h3>Discord presence rotation</h3>
+<p class="muted">List multiple status activities and rotate them automatically without restarting the bot.</p>
 </div>
-<div class="page-intro-actions"><button class="ghost" id="apply-presence-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/save.svg')"></span><span>Save &amp; apply</span></button></div>
+<div class="page-intro-actions"><span class="hero-pill" id="presence-rotation-status">Static presence</span><button class="ghost" id="apply-presence-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/save.svg')"></span><span>Save &amp; apply</span></button></div>
 </div>
 <article class="card">
-<div class="card-head"><div><p class="eyebrow">Presence</p><h3>Status customization</h3></div></div>
+<div class="card-head"><div><p class="eyebrow">Rotation</p><h3>Timing and behavior</h3></div></div>
 <div class="form-grid">
-<label>Status<select data-bind="presence.status"><option value="online">Online</option><option value="idle">Idle</option><option value="dnd">Do not disturb</option><option value="invisible">Invisible</option></select></label>
-<label>Activity type<select data-bind="presence.activityType"><option value="playing">Playing</option><option value="listening">Listening</option><option value="watching">Watching</option><option value="competing">Competing</option></select></label>
-<label class="form-span-two">Activity text<input data-bind="presence.activityText" placeholder="dramatic bridge sections"/></label>
+<label class="inline-toggle"><span>Rotate through enabled entries</span><span class="switch"><input data-bind="presence.rotationEnabled" type="checkbox"/><span></span></span></label>
+<label>Rotate every (seconds)<input data-bind="presence.intervalSeconds" min="15" max="86400" step="1" type="number"/></label>
 </div>
+<p class="muted">The minimum interval is 15 seconds to avoid Discord presence rate limits. With rotation disabled, the first enabled entry is used as the static presence.</p>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Presence playlist</p><h3>Status entries</h3><p class="muted">Each entry can use its own availability status, activity type, text, and streaming URL.</p></div><button class="ghost" id="add-presence-entry-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/plus.svg')"></span><span>Add status</span></button></div>
+<div class="presence-entry-list" id="presence-entry-list"></div>
 </article>
 </section>
 <section class="page" data-page-panel="appearance">
@@ -1046,7 +1051,7 @@
 </section></div>
 </section>
 </main>
-<script src="/assets/config.js?v=20260621.2"></script>
+<script src="/assets/config.js?v=20260621.1"></script>
 <script src="/assets/app.js?v=20260621.2"></script>
 </body>
 </html>

@@ -2698,3 +2698,110 @@ body.reduce-motion *::after {
   border-color: rgba(255, 127, 149, 0.82);
   box-shadow: 0 0 0 3px rgba(255, 127, 149, 0.12);
 }
+
+/* Presence rotation playlist */
+.presence-entry-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.presence-entry {
+  display: grid;
+  grid-template-columns: auto minmax(7rem, 0.7fr) minmax(10rem, 1fr) minmax(11rem, 1fr) minmax(15rem, 1.6fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: rgba(2, 9, 14, 0.32);
+}
+
+.presence-entry-index {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  align-self: center;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.presence-enabled {
+  min-width: 7rem;
+}
+
+.presence-enabled .switch {
+  margin-top: 0.42rem;
+}
+
+.presence-text {
+  min-width: 0;
+}
+
+.presence-stream-url {
+  grid-column: 3 / 6;
+}
+
+.presence-stream-url.is-hidden {
+  display: none;
+}
+
+.presence-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: end;
+  padding-bottom: 0.08rem;
+}
+
+.presence-entry-actions .icon-button {
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 0.75rem;
+}
+
+.presence-entry-actions .icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1180px) {
+  .presence-entry {
+    grid-template-columns: auto minmax(7rem, 0.7fr) repeat(2, minmax(10rem, 1fr));
+  }
+
+  .presence-text,
+  .presence-stream-url {
+    grid-column: 2 / -1;
+  }
+
+  .presence-entry-actions {
+    grid-column: 2 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 720px) {
+  .presence-entry {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+
+  .presence-enabled,
+  .presence-entry label,
+  .presence-text,
+  .presence-stream-url,
+  .presence-entry-actions {
+    grid-column: 2;
+  }
+
+  .presence-entry-index {
+    grid-row: 1 / span 5;
+  }
+
+  .presence-entry-actions {
+    justify-content: flex-start;
+  }
+}
