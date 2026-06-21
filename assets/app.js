@@ -19,6 +19,8 @@ let state = {
   health: null,
   adminStatus: null,
   media: { items: [], stats: {}, drive: {} },
+  commandSetup: { commands: [], syncStatus: "unknown", syncError: null },
+  driveDiagnostic: null,
   channels: [],
   categories: [],
   connected: false,
@@ -47,7 +49,7 @@ const PAGE_META = {
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
   "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, service-account access, and connection testing." },
   triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs and response text." },
-  commands: { section: "Discord", title: "Commands", description: "Enable, search, and synchronize slash commands." },
+  commands: { section: "Discord", title: "Command setup", description: "Control runtime availability and publish the exact Discord slash-command tree." },
   games: { section: "Games", title: "Game hub", description: "Global limits and links to every game configuration." },
   "game-tictactoe": { section: "Games", title: "Tic-tac-toe", description: "Board behavior, bot opponents, and result messages." },
   "game-coinflip": { section: "Games", title: "Coinflip", description: "Labels and result message customization." },
@@ -356,19 +358,21 @@ async function refreshAll() {
   if (refreshLabel) refreshLabel.textContent = "Refreshing...";
 
   try {
-    const [health, configData, discordData, logsData, adminStatusData, mediaData] = await Promise.all([
+    const [health, configData, discordData, logsData, adminStatusData, mediaData, commandData] = await Promise.all([
       api("/api/health"),
       api(`/api/config/${state.guildId}`),
       api(`/api/discord/${state.guildId}/channels`).catch(() => ({ channels: [], categories: [], botReady: false })),
       api(`/api/logs/${state.guildId}`).catch(() => ({ logs: [] })),
       api(`/api/admin/${state.guildId}/status`).catch(() => ({ botStatus: "unknown", memory: { channels: 0, messages: 0 } })),
       api(`/api/media/${state.guildId}`).catch(() => ({ items: [], stats: {}, drive: {} })),
+      api(`/api/discord/${state.guildId}/commands`).catch(() => ({ commands: [], syncStatus: "unknown", syncError: null })),
     ]);
 
     state.health = health;
     state.adminStatus = adminStatusData;
     state.config = configData.config;
     state.media = mediaData;
+    state.commandSetup = commandData;
     normalizeConfigTheme();
     state.channels = discordData.channels || [];
     state.categories = discordData.categories || [];
@@ -382,6 +386,7 @@ async function refreshAll() {
     renderProviders();
     renderMedia(mediaData);
     renderDriveStatus(mediaData);
+    renderDriveDiagnostic();
     renderCommands();
     renderTriggers();
     renderLogs(logsData.logs || []);
@@ -479,6 +484,35 @@ function renderDriveStatus(mediaData = state.media) {
   if (folderSummary) folderSummary.textContent = folderId ? compactId(folderId) : "Not selected";
 }
 
+function renderDriveDiagnostic(detail = state.driveDiagnostic) {
+  const card = $("#drive-diagnostic-card");
+  if (!card) return;
+  const normalized = detail && typeof detail === "object" ? detail : null;
+  card.hidden = !normalized;
+  if (!normalized) return;
+
+  const success = normalized.ok === true;
+  $("#drive-diagnostic-title").textContent = success ? "Google Drive connection ready" : "Google Drive needs attention";
+  $("#drive-diagnostic-message").textContent = normalized.message || (success ? "The folder is accessible and ready for media." : "The connection test failed.");
+  $("#drive-diagnostic-code").textContent = success ? "connected" : normalized.code || normalized.reason || "drive_error";
+  $("#drive-diagnostic-project").textContent = normalized.projectId || "Not reported";
+  $("#drive-diagnostic-account").textContent = normalized.serviceAccountEmail || state.media?.drive?.serviceAccountEmail || "Not configured";
+  $("#drive-diagnostic-next").textContent = success
+    ? "Use /media or archive a Discord attachment"
+    : normalized.code === "drive_api_disabled"
+      ? "Enable Google Drive API, wait a few minutes, then retest"
+      : normalized.code === "folder_permission_denied" || normalized.code === "folder_not_found"
+        ? "Share the folder with the service account as Editor"
+        : "Check the backend logs and retest";
+  const action = $("#drive-diagnostic-action");
+  if (action) {
+    action.hidden = !normalized.actionUrl;
+    if (normalized.actionUrl) action.href = normalized.actionUrl;
+  }
+  card.classList.toggle("diagnostic-success", success);
+  card.classList.toggle("diagnostic-error", !success);
+}
+
 function renderMedia(data = state.media) {
   state.media = data || { items: [], stats: {}, drive: {} };
   const stats = state.media.stats || {};
@@ -562,10 +596,25 @@ async function testDrive() {
     body: JSON.stringify({ config: state.config }),
   });
   state.config = saved.config;
-  const result = await api(`/api/media/${state.guildId}/test-drive`, { method: "POST", body: "{}" });
-  const name = result.folder?.name || "Google Drive folder";
-  toast(`Connected to ${name}.`);
-  await refreshAll();
+  try {
+    const result = await api(`/api/media/${state.guildId}/test-drive`, { method: "POST", body: "{}" });
+    const name = result.folder?.name || "Google Drive folder";
+    state.driveDiagnostic = {
+      ok: true,
+      message: `Connected to ${name}. The bot can read and add files in this folder.`,
+      serviceAccountEmail: result.serviceAccountEmail,
+    };
+    renderDriveDiagnostic();
+    toast(`Connected to ${name}.`);
+    await refreshAll();
+    renderDriveDiagnostic(state.driveDiagnostic);
+    return result;
+  } catch (error) {
+    const detail = error.detail && typeof error.detail === "object" ? error.detail : error.payload?.detail;
+    state.driveDiagnostic = typeof detail === "object" ? detail : { message: error.message, code: "drive_request_failed" };
+    renderDriveDiagnostic();
+    throw error;
+  }
 }
 
 async function deleteMediaRecord(recordId) {
@@ -1046,23 +1095,47 @@ function renderCommands() {
   const grid = $("#commands-grid");
   if (!grid || !state.config) return;
   const commands = state.config.commands || {};
+  const catalog = Array.isArray(state.commandSetup?.commands) && state.commandSetup.commands.length
+    ? state.commandSetup.commands
+    : Object.keys(commands).map((key) => ({ key, name: key === "eightball" ? "8ball" : key, category: "Other", description: "Dashboard-managed slash command.", registered: false }));
   const query = String($("#command-search-input")?.value || "").trim().toLowerCase();
-  const entries = Object.entries(commands).filter(([name]) => !query || name.toLowerCase().includes(query));
+  const categoryFilter = String($("#command-category-filter")?.value || "");
+  const categories = [...new Set(catalog.map((item) => item.category || "Other"))].sort();
+  const categorySelect = $("#command-category-filter");
+  if (categorySelect) {
+    const previous = categorySelect.value;
+    categorySelect.innerHTML = `<option value="">All categories</option>${categories.map((category) => `<option value="${escapeAttr(category)}">${escapeHtml(category)}</option>`).join("")}`;
+    categorySelect.value = categories.includes(previous) ? previous : categoryFilter;
+    updateSelectShell(categorySelect);
+  }
+  const activeCategory = String(categorySelect?.value || categoryFilter);
+  const entries = catalog.filter((item) => {
+    const haystack = `${item.name || item.key} ${item.description || ""} ${item.category || ""}`.toLowerCase();
+    return (!query || haystack.includes(query)) && (!activeCategory || item.category === activeCategory);
+  });
+
   grid.innerHTML = entries.length
-    ? entries.map(
-      ([name, enabled]) => `
-      <div class="command-toggle">
-        <div>
-          <strong>/${escapeHtml(name)}</strong>
-          <small>${enabled ? "Enabled" : "Disabled"}</small>
+    ? entries.map((item) => {
+      const key = item.key;
+      const enabled = Boolean(commands[key]);
+      const registered = Boolean(item.registered);
+      return `
+      <div class="command-toggle command-management-card ${enabled ? "enabled" : "disabled"}">
+        <div class="command-card-copy">
+          <div class="command-card-title"><strong>/${escapeHtml(item.name || key)}</strong><span class="command-category">${escapeHtml(item.category || "Other")}</span></div>
+          <small>${escapeHtml(item.description || "Dashboard-managed slash command.")}</small>
+          <div class="command-status-row">
+            <span class="status-chip ${enabled ? "ok" : "off"}">${enabled ? "Enabled" : "Disabled"}</span>
+            <span class="status-chip ${registered ? "ok" : "pending"}">${registered ? "Published in Discord" : enabled ? "Publish required" : "Not registered"}</span>
+          </div>
         </div>
-        <label class="switch">
-          <input type="checkbox" data-command="${escapeAttr(name)}" ${enabled ? "checked" : ""}>
+        <label class="switch" title="${enabled ? "Disable" : "Enable"} /${escapeAttr(item.name || key)}">
+          <input type="checkbox" data-command="${escapeAttr(key)}" ${enabled ? "checked" : ""}>
           <span></span>
         </label>
-      </div>`
-    ).join("")
-    : `<div class="media-empty">${icon("search")}<strong>No matching commands</strong><span>Try another command name.</span></div>`;
+      </div>`;
+    }).join("")
+    : `<div class="media-empty">${icon("search")}<strong>No matching commands</strong><span>Try another name, description, or category.</span></div>`;
 
   $$("[data-command]", grid).forEach((input) => {
     input.onchange = () => {
@@ -1071,6 +1144,19 @@ function renderCommands() {
       renderCommands();
     };
   });
+
+  const enabledCount = catalog.filter((item) => Boolean(commands[item.key])).length;
+  const registeredCount = catalog.filter((item) => Boolean(item.registered)).length;
+  if ($("#command-enabled-count")) $("#command-enabled-count").textContent = String(enabledCount);
+  if ($("#command-registered-count")) $("#command-registered-count").textContent = String(registeredCount);
+  if ($("#command-total-count")) $("#command-total-count").textContent = String(catalog.length);
+  const pill = $("#command-publish-pill");
+  if (pill) {
+    const pending = catalog.some((item) => Boolean(commands[item.key]) !== Boolean(item.registered));
+    pill.textContent = pending ? "Changes need publishing" : state.commandSetup?.syncStatus === "ok" ? "Discord tree is current" : "Command sync needs attention";
+    pill.classList.toggle("warn", pending);
+    pill.classList.toggle("ok", !pending && state.commandSetup?.syncStatus === "ok");
+  }
 }
 
 function setAllCommands(enabled) {
@@ -1191,8 +1277,15 @@ function addTrigger() {
 
 async function syncCommands() {
   try {
-    await api(`/api/discord/${state.guildId}/sync-commands`, { method: "POST", body: "{}" });
-    toast("Slash commands synced.");
+    if (!state.config) throw new Error("Connect the dashboard first.");
+    const saved = await api(`/api/config/${state.guildId}`, {
+      method: "PUT",
+      body: JSON.stringify({ config: state.config }),
+    });
+    state.config = saved.config;
+    const result = await api(`/api/discord/${state.guildId}/sync-commands`, { method: "POST", body: "{}" });
+    setDirty(false);
+    toast(`${result.count ?? result.registered?.length ?? 0} slash commands published to Discord.`);
     await refreshAll();
   } catch (error) {
     const inviteUrl = error.detail?.inviteUrl || error.payload?.detail?.inviteUrl || state.health?.bot?.commandSync?.inviteUrl;
@@ -1357,10 +1450,12 @@ function init() {
   const mediaChannel = $("#media-channel-filter");
   const mediaSearch = $("#media-search-filter");
   const commandSearch = $("#command-search-input");
+  const commandCategory = $("#command-category-filter");
   if (mediaType) mediaType.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaChannel) mediaChannel.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaSearch) mediaSearch.oninput = () => renderMedia(state.media);
   if (commandSearch) commandSearch.oninput = renderCommands;
+  if (commandCategory) commandCategory.onchange = renderCommands;
 
   $$('[data-test-drive]').forEach((button) => {
     button.onclick = () => testDrive().catch((error) => toast(error.message));

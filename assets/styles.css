@@ -2290,3 +2290,116 @@ body.reduce-motion *::after {
     height: 1.08rem;
   }
 }
+
+/* Command setup management */
+.command-toolbar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.4fr) minmax(12rem, 0.6fr);
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.command-management-grid {
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+
+.command-management-card {
+  align-items: flex-start;
+  min-height: 9.2rem;
+  padding: 1rem;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.command-management-card.enabled {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 13rem), rgba(2, 9, 14, 0.36);
+}
+
+.command-management-card.disabled {
+  opacity: 0.72;
+}
+
+.command-card-copy {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.command-card-copy > small {
+  min-height: 2.5rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.command-card-title,
+.command-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.command-card-title strong {
+  font-size: 1.03rem;
+}
+
+.command-category,
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.command-category {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.status-chip.ok {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+}
+
+.status-chip.pending {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
+}
+
+.status-chip.off {
+  color: var(--muted);
+}
+
+.command-publish-note {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.command-publish-note .icon {
+  align-self: start;
+  margin-top: 0.2rem;
+}
+
+.drive-diagnostic-card {
+  border-color: rgba(251, 113, 133, 0.4);
+  background: radial-gradient(circle at top left, rgba(251, 113, 133, 0.12), transparent 22rem), rgba(2, 9, 14, 0.42);
+}
+
+.drive-diagnostic-card.diagnostic-success {
+  border-color: rgba(74, 222, 128, 0.38);
+  background: radial-gradient(circle at top left, rgba(74, 222, 128, 0.1), transparent 22rem), rgba(2, 9, 14, 0.42);
+}
+
+@media (max-width: 760px) {
+  .command-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .command-management-grid {
+    grid-template-columns: 1fr;
+  }
+}

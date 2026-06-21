@@ -76,7 +76,7 @@
 <span>Discord</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
 </button>
 <div class="nav-group-items">
-<button class="nav-item" data-page="commands" title="Slash commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span class="nav-label">Commands</span></button>
+<button class="nav-item" data-page="commands" title="Command setup" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span class="nav-label">Command setup</span></button>
 </div>
 </div>
 <div class="nav-group" data-nav-group="games">
@@ -462,6 +462,14 @@
 <div class="notice warning-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span>Public links allow anyone with the URL to view the file. Keep this disabled for private archives.</span></div>
 </article>
 <article class="card">
+<div class="card-head"><div><p class="eyebrow">Random media command</p><h3>/media delivery limits</h3></div><button class="ghost" data-page-link="commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span>Command setup</span></button></div>
+<div class="form-grid">
+<label>Maximum Discord attachment (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
+<label>Maximum Drive files scanned<input data-bind="media.randomCommandListLimit" min="1" max="5000" type="number"/></label>
+</div>
+<p class="hint">The command obeys Discord's server upload limit even when this value is higher.</p>
+</article>
+<article class="card">
 <div class="card-head"><div><p class="eyebrow">Discord feedback</p><h3>Upload notifications</h3></div></div>
 <div class="form-grid">
 <label class="inline-toggle">Confirm successful uploads<span class="switch"><input data-bind="media.notifyOnUpload" type="checkbox"/><span></span></span></label>
@@ -489,6 +497,16 @@
 <div><small>Folder</small><strong id="drive-folder-summary">Not selected</strong></div>
 <div><small>Service account to invite</small><strong id="settings-drive-service-account">Not configured</strong></div>
 <div><small>Credential source</small><strong id="settings-drive-credential-state">Checking</strong></div>
+</div>
+</article>
+<article class="card drive-diagnostic-card" id="drive-diagnostic-card" hidden>
+<div class="card-head"><div><p class="eyebrow">Connection diagnostic</p><h3 id="drive-diagnostic-title">Google Drive needs attention</h3></div><a class="ghost compact" id="drive-diagnostic-action" href="#" target="_blank" rel="noopener noreferrer" hidden><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/external-link.svg')"></span><span>Open Google Cloud</span></a></div>
+<p class="muted" id="drive-diagnostic-message"></p>
+<div class="drive-summary">
+<div><small>Error code</small><strong id="drive-diagnostic-code">—</strong></div>
+<div><small>Google Cloud project</small><strong id="drive-diagnostic-project">—</strong></div>
+<div><small>Service account</small><strong id="drive-diagnostic-account">—</strong></div>
+<div><small>Next step</small><strong id="drive-diagnostic-next">Run the test again after fixing access</strong></div>
 </div>
 </article>
 <article class="card">
@@ -525,25 +543,45 @@
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span></div>
 <div class="page-intro-copy">
 <p class="eyebrow">Discord</p>
-<h3>Slash commands</h3>
-<p class="muted">Enable or disable individual commands, then synchronize them with Discord.</p>
+<h3>Command setup management</h3>
+<p class="muted">Choose exactly which slash commands appear in Discord, save the configuration, then publish the command tree.</p>
 </div>
+<div class="page-intro-actions"><span class="hero-pill" id="command-publish-pill">Command state unknown</span></div>
+</div>
+<div class="grid metrics command-metrics">
+<article class="card metric"><span class="metric-label">Enabled</span><strong id="command-enabled-count">0</strong><small>Configured to appear</small></article>
+<article class="card metric"><span class="metric-label">Registered</span><strong id="command-registered-count">0</strong><small>Last published tree</small></article>
+<article class="card metric"><span class="metric-label">Available</span><strong id="command-total-count">0</strong><small>Command definitions</small></article>
 </div>
 <article class="card">
 <div class="card-head">
-<div>
-<p class="eyebrow">Slash commands</p>
-<h3>Enable or disable commands</h3>
-</div>
+<div><p class="eyebrow">Slash command registry</p><h3>Enable, disable, and publish</h3></div>
 <div class="top-actions"><button class="ghost" id="enable-all-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Enable all</span></button><button class="ghost" id="disable-all-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/close.svg')"></span><span>Disable all</span></button>
 <button class="ghost" id="invite-bot-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/external-link.svg')"></span><span>Fix access</span></button>
-<button class="ghost" id="sync-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Sync commands</span></button>
+<button class="primary" id="sync-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Save &amp; publish</span></button>
 </div>
 </div>
-<div class="notice" hidden="" id="command-sync-notice"></div><label class="command-search">Search commands<input id="command-search-input" placeholder="Type a command name" type="search"/></label>
-<div class="command-grid" id="commands-grid"></div>
+<div class="notice" hidden="" id="command-sync-notice"></div>
+<div class="notice command-publish-note"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/info.svg')"></span><span><strong>Runtime and slash-list behavior are linked.</strong><br/>Disabled commands are rejected immediately and removed from Discord after you publish. Re-enable and publish to add them back.</span></div>
+<div class="command-toolbar">
+<label>Search commands<input id="command-search-input" placeholder="Type a command name or description" type="search"/></label>
+<label>Category<select id="command-category-filter"><option value="">All categories</option></select></label>
+</div>
+<div class="command-grid command-management-grid" id="commands-grid"></div>
 </article>
-</section><section class="page" data-page-panel="games">
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">/media command</p><h3>Random Drive media delivery</h3></div><span class="hero-pill">Images + MP4</span></div>
+<p class="muted"><code>/media</code> selects any supported file. <code>/media type:image</code> or <code>/media type:video</code> filters the Drive folder. It only works inside the configured media channel.</p>
+<div class="form-grid">
+<label>Media channel<select data-bind="media.channelId" data-channel-select="text"></select></label>
+<label>Maximum Discord attachment (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
+<label>Maximum Drive files scanned per request<input data-bind="media.randomCommandListLimit" min="1" max="5000" type="number"/></label>
+<label>Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
+</div>
+<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span>Supported images: <code>.png</code>, <code>.webp</code>, <code>.jpg</code>, <code>.jpeg</code>. Supported videos: <code>.mp4</code>. Private files are downloaded by the bot and attached directly to Discord when they fit the upload limit.</span></div>
+</article>
+</section>
+<section class="page" data-page-panel="games">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/games.svg')"></span></div>
 <div class="page-intro-copy">
