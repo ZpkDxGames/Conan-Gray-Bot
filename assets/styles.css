@@ -2700,6 +2700,53 @@ body.reduce-motion *::after {
   font-size: .72rem;
 }
 
+.discord-native-media-preview {
+  margin: 0 0 8px 48px;
+}
+
+.discord-native-media-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 550px);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid #343a40;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 72% 28%, rgba(103, 232, 249, .22), transparent 24%),
+    linear-gradient(145deg, #27313b, #11161c 58%, #233347);
+}
+
+.discord-native-media-frame::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: rgba(255, 255, 255, .16);
+}
+
+.discord-native-media-play {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding-left: 3px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0, 0, 0, .62);
+  font-size: 1.2rem;
+}
+
+.discord-native-media-label {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  color: #dbdee1;
+  font-size: .74rem;
+  text-shadow: 0 1px 3px #000;
+}
+
 .discord-template-preview {
   display: grid;
   gap: 11px;

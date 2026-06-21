@@ -945,7 +945,10 @@ function ensureTemplateProfiles() {
     };
   });
   state.config.media ??= {};
-  state.config.media.videoDisplayMode ??= "inline_card";
+  const mediaModeVersion = Number(state.config.media.videoDisplayModeVersion || 0);
+  if (mediaModeVersion < 2) state.config.media.videoDisplayMode = "embed_attachment";
+  state.config.media.videoDisplayMode ??= "embed_attachment";
+  state.config.media.videoDisplayModeVersion = 2;
   state.config.media.videoFallbackMode ??= "embed_attachment";
   state.config.media.videoAltTextTemplate ??= "{filename} · requested by {actor}";
 }
@@ -968,13 +971,13 @@ function templateProfileEditor(profile) {
       <div class="form-grid template-media-options">
         <label>Video presentation
           <select data-bind="media.videoDisplayMode"${disabled}>
-            <option value="inline_card">Inline media card</option>
-            <option value="embed_attachment">Embed + native attachment</option>
+            <option value="embed_attachment">Native video + embed</option>
+            <option value="inline_card">Inline Components V2 card</option>
           </select>
         </label>
         <label>Video alt-text template<input data-bind="media.videoAltTextTemplate" placeholder="{filename} · requested by {actor}"${disabled}></label>
       </div>
-      <p class="hint">Inline media cards use Discord Components V2. The bot falls back to an embed and native attachment when needed.</p>
+      <p class="hint">Native video + embed matches the classic media response: Discord's player appears first, followed by the customized media embed. Components V2 remains available as an optional layout.</p>
     </section>
   ` : "";
   return `
@@ -1133,6 +1136,7 @@ function renderTemplatePreview() {
   const timestampEl = $("#template-preview-timestamp");
   const thumbnailEl = $("#template-preview-thumbnail");
   const mediaEl = $("#template-preview-media");
+  const nativeMediaEl = $("#template-preview-native-media");
   if (authorEl) authorEl.hidden = profile.showRequester === false;
   if (footerEl) footerEl.hidden = !footer;
   if (fieldsEl) fieldsEl.hidden = profile.showFields === false;
@@ -1143,7 +1147,9 @@ function renderTemplatePreview() {
     if (!thumbnailEl.hidden) thumbnailEl.src = url;
     else thumbnailEl.removeAttribute("src");
   }
-  if (mediaEl) mediaEl.hidden = key !== "media" || state.config.media?.videoDisplayMode !== "inline_card";
+  const mediaMode = state.config.media?.videoDisplayMode || "embed_attachment";
+  if (mediaEl) mediaEl.hidden = key !== "media" || mediaMode !== "inline_card";
+  if (nativeMediaEl) nativeMediaEl.hidden = key !== "media" || mediaMode !== "embed_attachment";
 }
 
 function bindConfigToInputs() {
