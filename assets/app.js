@@ -4,6 +4,11 @@ const STORAGE = {
   apiBase: "conan-dashboard-api-base",
   key: "conan-dashboard-key",
   guildId: "conan-dashboard-guild-id",
+  activePage: "conan-dashboard-active-page",
+  sidebarCollapsed: "conan-dashboard-sidebar-collapsed",
+  navGroups: "conan-dashboard-nav-groups",
+  density: "conan-dashboard-density",
+  reduceMotion: "conan-dashboard-reduce-motion",
 };
 
 let state = {
@@ -13,14 +18,56 @@ let state = {
   config: null,
   health: null,
   adminStatus: null,
+  media: { items: [], stats: {}, drive: {} },
   channels: [],
   categories: [],
   connected: false,
   refreshing: false,
+  dirty: false,
+  currentPage: "overview",
+};
+
+const PAGE_ALIASES = {
+  ai: "ai-behavior",
+  media: "media-library",
+  settings: "setup-ids",
+  admin: "admin-permissions",
+};
+
+const PAGE_META = {
+  overview: { section: "Workspace", title: "Overview", description: "Status, shortcuts, and the most important controls." },
+  "setup-ids": { section: "Workspace", title: "Quick setup", description: "Important Discord IDs and shared connection targets." },
+  "ai-behavior": { section: "AI Studio", title: "Behavior", description: "Response routing, triggers, generation limits, and cooldowns." },
+  "ai-memory": { section: "AI Studio", title: "Branch memory", description: "Mention-created branches, reply continuity, and reset rules." },
+  "ai-personality": { section: "AI Studio", title: "Personality", description: "Tone, response length, formatting, and custom instructions." },
+  "ai-messages": { section: "AI Studio", title: "Replies & embeds", description: "Message templates, delivery limits, mentions, and embed styling." },
+  "ai-providers": { section: "AI Studio", title: "Providers", description: "Fallback priority and provider availability." },
+  "media-library": { section: "Media", title: "Library", description: "Browse and manage archived Discord photos and videos." },
+  "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
+  "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, service-account access, and connection testing." },
+  triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs and response text." },
+  commands: { section: "Discord", title: "Commands", description: "Enable, search, and synchronize slash commands." },
+  games: { section: "Games", title: "Game hub", description: "Global limits and links to every game configuration." },
+  "game-tictactoe": { section: "Games", title: "Tic-tac-toe", description: "Board behavior, bot opponents, and result messages." },
+  "game-coinflip": { section: "Games", title: "Coinflip", description: "Labels and result message customization." },
+  "game-eightball": { section: "Games", title: "8-ball", description: "Custom answer pool and command availability." },
+  "game-rps": { section: "Games", title: "Rock Paper Scissors", description: "Win, loss, and draw responses." },
+  "game-guesssong": { section: "Games", title: "Guess the Song", description: "Prompt and hint pool configuration." },
+  "game-wyr": { section: "Games", title: "Would You Rather", description: "Question pool and enable state." },
+  "admin-permissions": { section: "Administration", title: "Permissions", description: "Role-gated commands and admin feedback messages." },
+  "admin-lifecycle": { section: "Administration", title: "Lifecycle", description: "Start, restart, stop, pause, or resume the bot." },
+  "admin-memory": { section: "Administration", title: "Memory tools", description: "Inspect and clear channel or server branch memory." },
+  "admin-presence": { section: "Administration", title: "Presence", description: "Discord status, activity type, and activity text." },
+  appearance: { section: "System", title: "Appearance", description: "Discord embed styling and local dashboard preferences." },
+  logs: { section: "System", title: "Logs", description: "Recent backend events and configuration activity." },
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+function icon(name) {
+  return `<span class="icon" style="--icon: url('/assets/icons/${escapeAttr(name)}.svg')" aria-hidden="true"></span>`;
+}
 
 function toast(message) {
   const el = $("#toast");
@@ -87,28 +134,197 @@ function setPath(object, path, value) {
   target[last] = value;
 }
 
-function showPage(name) {
-  $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.page === name));
-  $$(".page").forEach((page) => page.classList.toggle("active", page.dataset.pagePanel === name));
-  $("#page-title").textContent = pageTitle(name);
+function readStoredNavGroups() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE.navGroups) || "{}") || {};
+  } catch {
+    return {};
+  }
 }
 
-function pageTitle(name) {
-  return {
-    overview: "Overview",
-    ai: "AI",
-    triggers: "Triggers",
-    commands: "Commands",
-    games: "Games",
-    admin: "Admin",
-    "game-tictactoe": "Tic-tac-toe",
-    "game-coinflip": "Coinflip",
-    "game-eightball": "8-ball",
-    "game-rps": "Rock Paper Scissors",
-    "game-guesssong": "Guess the Song",
-    "game-wyr": "Would You Rather",
-    logs: "Logs",
-  }[name] || name.charAt(0).toUpperCase() + name.slice(1);
+function setNavGroupOpen(group, open, persist = true) {
+  if (!group) return;
+  group.classList.toggle("open", Boolean(open));
+  group.querySelector(".nav-group-toggle")?.setAttribute("aria-expanded", String(Boolean(open)));
+  if (!persist) return;
+  const stored = readStoredNavGroups();
+  stored[group.dataset.navGroup] = Boolean(open);
+  localStorage.setItem(STORAGE.navGroups, JSON.stringify(stored));
+}
+
+function setMobileSidebar(open) {
+  const isOpen = Boolean(open) && window.innerWidth <= 980;
+  document.body.classList.toggle("sidebar-open", isOpen);
+  const button = $("#mobile-nav-btn");
+  const backdrop = $("#sidebar-backdrop");
+  if (button) button.setAttribute("aria-expanded", String(isOpen));
+  if (backdrop) backdrop.hidden = !isOpen;
+}
+
+function setSidebarCollapsed(collapsed, persist = true) {
+  document.body.classList.toggle("sidebar-collapsed", Boolean(collapsed));
+  const button = $("#sidebar-collapse-btn");
+  if (button) {
+    const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  }
+  const mode = $("#dashboard-sidebar-mode-select");
+  if (mode) {
+    mode.value = collapsed ? "compact" : "expanded";
+    updateSelectShell(mode);
+  }
+  if (persist) localStorage.setItem(STORAGE.sidebarCollapsed, collapsed ? "1" : "0");
+}
+
+function applyUiPreferences() {
+  const collapsed = localStorage.getItem(STORAGE.sidebarCollapsed) === "1";
+  const density = localStorage.getItem(STORAGE.density) || "comfortable";
+  const reduceMotion = localStorage.getItem(STORAGE.reduceMotion) === "1";
+  setSidebarCollapsed(collapsed, false);
+  document.body.dataset.density = density;
+  document.body.classList.toggle("reduce-motion", reduceMotion);
+
+  const densitySelect = $("#dashboard-density-select");
+  const sidebarSelect = $("#dashboard-sidebar-mode-select");
+  const motionInput = $("#dashboard-reduce-motion");
+  if (densitySelect) densitySelect.value = density;
+  if (sidebarSelect) sidebarSelect.value = collapsed ? "compact" : "expanded";
+  if (motionInput) motionInput.checked = reduceMotion;
+}
+
+function filterNavigation(query) {
+  const normalized = String(query || "").trim().toLowerCase();
+  let visibleCount = 0;
+  $$(".nav-group").forEach((group) => {
+    if (normalized && group.dataset.preSearchOpen === undefined) {
+      group.dataset.preSearchOpen = group.classList.contains("open") ? "1" : "0";
+    }
+    let groupMatches = 0;
+    $$(".nav-item", group).forEach((item) => {
+      const haystack = `${item.textContent} ${item.title || ""} ${item.dataset.page || ""}`.toLowerCase();
+      const matches = !normalized || haystack.includes(normalized);
+      item.hidden = !matches;
+      if (matches) groupMatches += 1;
+    });
+    group.hidden = groupMatches === 0;
+    visibleCount += groupMatches;
+    if (normalized && groupMatches) setNavGroupOpen(group, true, false);
+    if (!normalized && group.dataset.preSearchOpen !== undefined) {
+      setNavGroupOpen(group, group.dataset.preSearchOpen === "1", false);
+      delete group.dataset.preSearchOpen;
+    }
+  });
+  const empty = $("#nav-empty");
+  if (empty) empty.hidden = visibleCount > 0;
+}
+
+function initNavigation() {
+  const storedGroups = readStoredNavGroups();
+  $$(".nav-group").forEach((group) => {
+    if (Object.hasOwn(storedGroups, group.dataset.navGroup)) {
+      setNavGroupOpen(group, storedGroups[group.dataset.navGroup], false);
+    }
+    group.querySelector(".nav-group-toggle")?.addEventListener("click", () => {
+      setNavGroupOpen(group, !group.classList.contains("open"));
+    });
+  });
+
+  $$(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => showPage(button.dataset.page));
+  });
+  $$('[data-page-link]').forEach((button) => {
+    button.addEventListener("click", () => showPage(button.dataset.pageLink));
+  });
+  $$('[data-open-page]').forEach((button) => {
+    button.addEventListener("click", () => showPage(button.dataset.openPage));
+  });
+
+  const search = $("#nav-search-input");
+  search?.addEventListener("input", () => filterNavigation(search.value));
+  search?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      search.value = "";
+      filterNavigation("");
+      search.blur();
+    }
+  });
+
+  $("#sidebar-collapse-btn")?.addEventListener("click", () => {
+    setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+  });
+  $("#mobile-nav-btn")?.addEventListener("click", () => {
+    setMobileSidebar(!document.body.classList.contains("sidebar-open"));
+  });
+  $("#sidebar-backdrop")?.addEventListener("click", () => setMobileSidebar(false));
+  $("#mobile-sidebar-close")?.addEventListener("click", () => setMobileSidebar(false));
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      if (window.innerWidth <= 980) setMobileSidebar(true);
+      search?.focus();
+      search?.select();
+    }
+  });
+
+  window.addEventListener("hashchange", () => showPage(pageFromLocation(), { skipHistory: true }));
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 980) setMobileSidebar(false);
+  });
+
+  showPage(pageFromLocation(), { skipHistory: Boolean(window.location.hash), keepScroll: true });
+}
+
+function normalizePageName(name) {
+  const clean = String(name || "").replace(/^#\/?/, "");
+  return PAGE_ALIASES[clean] || clean || "overview";
+}
+
+function pageFromLocation() {
+  const fromHash = normalizePageName(window.location.hash);
+  if (PAGE_META[fromHash]) return fromHash;
+  const stored = normalizePageName(localStorage.getItem(STORAGE.activePage));
+  return PAGE_META[stored] ? stored : "overview";
+}
+
+function showPage(requestedName, options = {}) {
+  closeSelectPortal();
+  const name = normalizePageName(requestedName);
+  const target = $(`.page[data-page-panel="${name}"]`);
+  const resolved = target ? name : "overview";
+  const meta = PAGE_META[resolved] || PAGE_META.overview;
+  state.currentPage = resolved;
+
+  $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.page === resolved));
+  $$(".page").forEach((page) => page.classList.toggle("active", page.dataset.pagePanel === resolved));
+
+  const activeButton = $(`.nav-item[data-page="${resolved}"]`);
+  const group = activeButton?.closest(".nav-group");
+  if (group) setNavGroupOpen(group, true, false);
+
+  const title = $("#page-title");
+  const section = $("#page-section");
+  const breadcrumb = $("#page-breadcrumb");
+  const description = $("#page-description");
+  if (title) title.textContent = meta.title;
+  if (section) section.textContent = meta.section;
+  if (breadcrumb) breadcrumb.textContent = meta.title;
+  if (description) description.textContent = meta.description;
+  document.title = `${meta.title} · Conan Gray Bot Dashboard`;
+
+  localStorage.setItem(STORAGE.activePage, resolved);
+  if (!options.skipHistory) history.replaceState(null, "", `#/${resolved}`);
+  if (!options.keepScroll) {
+    const content = $(".content");
+    requestAnimationFrame(() => content?.scrollTo({ top: 0, behavior: "auto" }));
+  }
+  setMobileSidebar(false);
+
+  if (resolved === "media-library" && state.connected) {
+    refreshMedia().catch((error) => toast(error.message));
+  }
+  if (resolved === "appearance") renderEmbedPreview();
 }
 
 function setConnected(connected) {
@@ -135,20 +351,23 @@ async function refreshAll() {
   if (state.refreshing) return;
   state.refreshing = true;
   $("#refresh-btn").disabled = true;
-  $("#refresh-btn").textContent = "Refreshing...";
+  const refreshLabel = $("#refresh-btn span:last-child");
+  if (refreshLabel) refreshLabel.textContent = "Refreshing...";
 
   try {
-    const [health, configData, discordData, logsData, adminStatusData] = await Promise.all([
+    const [health, configData, discordData, logsData, adminStatusData, mediaData] = await Promise.all([
       api("/api/health"),
       api(`/api/config/${state.guildId}`),
       api(`/api/discord/${state.guildId}/channels`).catch(() => ({ channels: [], categories: [], botReady: false })),
       api(`/api/logs/${state.guildId}`).catch(() => ({ logs: [] })),
       api(`/api/admin/${state.guildId}/status`).catch(() => ({ botStatus: "unknown", memory: { channels: 0, messages: 0 } })),
+      api(`/api/media/${state.guildId}`).catch(() => ({ items: [], stats: {}, drive: {} })),
     ]);
 
     state.health = health;
     state.adminStatus = adminStatusData;
     state.config = configData.config;
+    state.media = mediaData;
     normalizeConfigTheme();
     state.channels = discordData.channels || [];
     state.categories = discordData.categories || [];
@@ -160,13 +379,18 @@ async function refreshAll() {
     bindConfigToInputs();
     enhanceSelects();
     renderProviders();
+    renderMedia(mediaData);
+    renderDriveStatus(mediaData);
     renderCommands();
     renderTriggers();
     renderLogs(logsData.logs || []);
+    renderEmbedPreview();
+    setDirty(false);
   } finally {
     state.refreshing = false;
     $("#refresh-btn").disabled = false;
-    $("#refresh-btn").textContent = "Refresh";
+    const refreshLabel = $("#refresh-btn span:last-child");
+    if (refreshLabel) refreshLabel.textContent = "Refresh";
   }
 }
 
@@ -231,6 +455,152 @@ function renderAdminStatus() {
 }
 
 
+function renderDriveStatus(mediaData = state.media) {
+  const drive = state.health?.googleDrive || {};
+  const mediaDrive = mediaData?.drive || {};
+  const folderId = String(state.config?.media?.googleDriveFolderId || mediaDrive.folderId || "").trim();
+  const ready = Boolean(drive.configured && folderId);
+  const status = $("#drive-status-pill");
+  if (status) {
+    status.textContent = !drive.configured ? "Drive credentials missing" : folderId ? "Drive ready to test" : "Choose a Drive folder";
+    status.classList.toggle("ok", ready);
+    status.classList.toggle("warn", !ready);
+  }
+
+  const email = drive.serviceAccountEmail || mediaDrive.serviceAccountEmail || "Not configured";
+  const serviceAccount = $("#drive-service-account");
+  if (serviceAccount) serviceAccount.textContent = email;
+  const settingsEmail = $("#settings-drive-service-account");
+  if (settingsEmail) settingsEmail.textContent = email;
+  const credentialState = $("#settings-drive-credential-state");
+  if (credentialState) credentialState.textContent = drive.configured ? "Backend credentials loaded" : "Credentials missing";
+  const folderSummary = $("#drive-folder-summary");
+  if (folderSummary) folderSummary.textContent = folderId ? compactId(folderId) : "Not selected";
+}
+
+function renderMedia(data = state.media) {
+  state.media = data || { items: [], stats: {}, drive: {} };
+  const stats = state.media.stats || {};
+  const allItems = state.media.items || [];
+  const query = String($("#media-search-filter")?.value || "").trim().toLowerCase();
+  const items = query
+    ? allItems.filter((item) => [item.name, item.originalName, item.authorName, item.channelName, item.channelId]
+        .some((value) => String(value || "").toLowerCase().includes(query)))
+    : allItems;
+  const setText = (selector, value) => {
+    const element = $(selector);
+    if (element) element.textContent = value;
+  };
+  setText("#media-file-count", String(stats.files || 0));
+  setText("#media-image-count", String(stats.images || 0));
+  setText("#media-video-count", String(stats.videos || 0));
+  setText("#media-total-size", formatBytes(stats.bytes || 0));
+
+  const list = $("#media-list");
+  if (!list) return;
+  list.innerHTML = items.length
+    ? items.map(mediaCardTemplate).join("")
+    : `<div class="media-empty">${icon("media")}<strong>${query ? "No matching media" : "No archived media yet"}</strong><span>${query ? "Try another filename, user, or channel." : "Send a photo or video in the configured Discord channel after enabling the archive."}</span></div>`;
+
+  $$("[data-delete-media]", list).forEach((button) => {
+    button.onclick = () => deleteMediaRecord(button.dataset.deleteMedia).catch((error) => toast(error.message));
+  });
+}
+
+function mediaCardTemplate(item) {
+  const isImage = item.mediaType === "image";
+  const previewUrl = isImage ? item.publicThumbnailUrl || "" : "";
+  const preview = previewUrl
+    ? `<img src="${escapeAttr(previewUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+    : `<span class="media-type-icon">${icon(isImage ? "image" : "video")}</span>`;
+  const driveLink = item.webViewLink
+    ? `<a class="ghost compact" href="${escapeAttr(item.webViewLink)}" target="_blank" rel="noopener noreferrer">${icon("external-link")}<span>Drive</span></a>`
+    : "";
+  const messageLink = item.messageUrl
+    ? `<a class="ghost compact" href="${escapeAttr(item.messageUrl)}" target="_blank" rel="noopener noreferrer">${icon("external-link")}<span>Discord</span></a>`
+    : "";
+  return `
+    <article class="media-card">
+      <div class="media-preview ${previewUrl ? "has-preview" : ""}">${preview}</div>
+      <div class="media-card-body">
+        <div class="media-card-title">
+          <strong title="${escapeAttr(item.name || item.originalName || "Media file")}">${escapeHtml(item.name || item.originalName || "Media file")}</strong>
+          <span class="media-kind">${item.mediaType === "video" ? "Video" : "Photo"}</span>
+        </div>
+        <dl class="media-meta">
+          <div><dt>From</dt><dd>${escapeHtml(item.authorName || "Unknown user")}</dd></div>
+          <div><dt>Channel</dt><dd>#${escapeHtml(item.channelName || item.channelId || "unknown")}</dd></div>
+          <div><dt>Size</dt><dd>${formatBytes(item.size || 0)}</dd></div>
+          <div><dt>Archived</dt><dd>${formatDate(item.createdAt)}</dd></div>
+        </dl>
+        <div class="media-actions">
+          ${driveLink}
+          ${messageLink}
+          <button class="danger compact" type="button" data-delete-media="${escapeAttr(item.recordId || "")}">${icon("trash")}<span>Delete</span></button>
+        </div>
+      </div>
+    </article>`;
+}
+
+async function refreshMedia() {
+  if (!state.connected && !state.key) return;
+  const type = $("#media-type-filter")?.value || "";
+  const channelId = $("#media-channel-filter")?.value || "";
+  const params = new URLSearchParams({ limit: "100" });
+  if (type) params.set("media_type", type);
+  if (channelId) params.set("channel_id", channelId);
+  const data = await api(`/api/media/${state.guildId}?${params.toString()}`);
+  renderMedia(data);
+  renderDriveStatus(data);
+}
+
+async function testDrive() {
+  if (!state.config) throw new Error("Connect the dashboard first.");
+  const saved = await api(`/api/config/${state.guildId}`, {
+    method: "PUT",
+    body: JSON.stringify({ config: state.config }),
+  });
+  state.config = saved.config;
+  const result = await api(`/api/media/${state.guildId}/test-drive`, { method: "POST", body: "{}" });
+  const name = result.folder?.name || "Google Drive folder";
+  toast(`Connected to ${name}.`);
+  await refreshAll();
+}
+
+async function deleteMediaRecord(recordId) {
+  if (!recordId) return;
+  const accepted = window.confirm("Delete this archive entry and its Google Drive file? This cannot be undone.");
+  if (!accepted) return;
+  await api(`/api/media/${state.guildId}/${encodeURIComponent(recordId)}?delete_drive_file=true`, { method: "DELETE" });
+  toast("Media deleted from the archive and Google Drive.");
+  await refreshMedia();
+}
+
+function formatBytes(value) {
+  let bytes = Number(value || 0);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let index = 0;
+  while (bytes >= 1024 && index < units.length - 1) {
+    bytes /= 1024;
+    index += 1;
+  }
+  return `${bytes >= 10 || index === 0 ? bytes.toFixed(0) : bytes.toFixed(1)} ${units[index]}`;
+}
+
+function formatDate(value) {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function compactId(value) {
+  const text = String(value || "");
+  if (text.length <= 24) return text;
+  return `${text.slice(0, 10)}…${text.slice(-8)}`;
+}
+
 function renderCommandSyncNotice() {
   const notice = $("#command-sync-notice");
   if (!notice) return;
@@ -244,7 +614,7 @@ function renderCommandSyncNotice() {
   notice.innerHTML = `
     <strong>Command sync needs access.</strong>
     <span>${escapeHtml(sync.error || "Reinvite the bot with bot + applications.commands scopes.")}</span>
-    ${sync.inviteUrl ? `<button class="ghost" type="button" data-open-invite>Open invite</button>` : ""}
+    ${sync.inviteUrl ? `<button class="ghost" type="button" data-open-invite>${icon("external-link")}<span>Open invite</span></button>` : ""}
   `;
   const button = notice.querySelector("[data-open-invite]");
   if (button) button.onclick = () => window.open(sync.inviteUrl, "_blank", "noopener,noreferrer");
@@ -356,130 +726,359 @@ function renderChannelSelectors() {
       .join("")}`;
     memorySelect.value = previous;
   }
+
+  const mediaFilter = $("#media-channel-filter");
+  if (mediaFilter) {
+    const previous = mediaFilter.value || "";
+    mediaFilter.innerHTML = `<option value="">All channels</option>${state.channels
+      .map((channel) => `<option value="${escapeAttr(channel.id)}">#${escapeHtml(channel.name)}</option>`)
+      .join("")}`;
+    mediaFilter.value = previous;
+  }
+}
+
+function setDirty(dirty = true) {
+  state.dirty = Boolean(dirty);
+  const indicator = $("#save-state");
+  if (indicator) {
+    indicator.textContent = state.dirty ? "Unsaved changes" : "All changes saved";
+    indicator.classList.toggle("dirty", state.dirty);
+  }
+  const saveButton = $("#save-btn");
+  if (saveButton) saveButton.classList.toggle("has-changes", state.dirty);
+}
+
+function valueForBoundInput(input, value) {
+  if (input.type === "checkbox") {
+    input.checked = Boolean(value);
+  } else if (input.dataset.lines !== undefined) {
+    input.value = Array.isArray(value) ? value.join("\n") : value || "";
+  } else if (input.dataset.array !== undefined) {
+    input.value = Array.isArray(value) ? value.join(", ") : value || "";
+  } else {
+    input.value = value ?? "";
+  }
+  updateSelectShell(input);
+}
+
+function syncBoundControls(path, value, source) {
+  $$(`[data-bind="${path}"]`).forEach((input) => {
+    if (input !== source) valueForBoundInput(input, value);
+  });
+}
+
+function readBoundInput(input) {
+  if (input.type === "checkbox") return input.checked;
+  if (input.type === "number") return Number(input.value);
+  if (input.dataset.lines !== undefined) return input.value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
+  if (input.dataset.array !== undefined) return input.value.split(",").map((item) => item.trim()).filter(Boolean);
+  return input.value;
 }
 
 function bindConfigToInputs() {
   $$("[data-bind]").forEach((input) => {
-    const value = getPath(state.config, input.dataset.bind);
-    if (input.type === "checkbox") {
-      input.checked = Boolean(value);
-    } else if (input.dataset.lines !== undefined) {
-      input.value = Array.isArray(value) ? value.join("\n") : value || "";
-    } else if (input.dataset.array !== undefined) {
-      input.value = Array.isArray(value) ? value.join(", ") : value || "";
-    } else {
-      input.value = value ?? "";
-    }
+    const path = input.dataset.bind;
+    valueForBoundInput(input, getPath(state.config, path));
 
     input.oninput = () => {
-      let nextValue;
-      if (input.type === "checkbox") {
-        nextValue = input.checked;
-      } else if (input.type === "number") {
-        nextValue = Number(input.value);
-      } else if (input.dataset.lines !== undefined) {
-        nextValue = input.value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
-      } else if (input.dataset.array !== undefined) {
-        nextValue = input.value.split(",").map((item) => item.trim()).filter(Boolean);
-      } else {
-        nextValue = input.value;
-      }
-      setPath(state.config, input.dataset.bind, nextValue);
-      if (input.dataset.bind === "ai.replyStyle") {
-        state.config.ai.embedReplies = nextValue === "embed";
-      }
+      const nextValue = readBoundInput(input);
+      setPath(state.config, path, nextValue);
+      syncBoundControls(path, nextValue, input);
+      if (path === "ai.replyStyle") state.config.ai.embedReplies = nextValue === "embed";
+      if (path.startsWith("appearance.")) renderEmbedPreview();
+      if (path === "ai.providerOrder") renderProviders();
+      setDirty(true);
     };
   });
+}
+
+let selectPortal = null;
+let activeSelect = null;
+let activeOptionIndex = -1;
+
+function ensureSelectPortal() {
+  if (selectPortal) return selectPortal;
+  selectPortal = document.createElement("div");
+  selectPortal.className = "select-portal";
+  selectPortal.setAttribute("role", "listbox");
+  selectPortal.hidden = true;
+  document.body.appendChild(selectPortal);
+  return selectPortal;
+}
+
+function updateSelectShell(select) {
+  const shell = select._selectShell;
+  if (!shell) return;
+  const label = shell.querySelector("[data-select-label]");
+  const button = shell.querySelector(".select-button");
+  const selected = select.options[select.selectedIndex];
+  label.textContent = selected?.textContent || "Select option";
+  button.classList.toggle("placeholder", !select.value);
+  button.disabled = select.disabled;
+  button.setAttribute("aria-expanded", String(activeSelect === select));
 }
 
 function enhanceSelects() {
-  $$("select").forEach((select) => {
+  $$("select").forEach((select, selectIndex) => {
     select.classList.add("native-select-hidden");
-    let shell = select.nextElementSibling;
-    if (!shell || !shell.classList.contains("select-ui")) {
+    let shell = select._selectShell;
+    if (!shell || !shell.isConnected) {
+      const legacyShell = select.nextElementSibling?.classList.contains("select-ui") ? select.nextElementSibling : null;
+      if (legacyShell) legacyShell.remove();
       shell = document.createElement("div");
       shell.className = "select-ui";
-      shell.innerHTML = `<button type="button" class="select-button"></button><div class="select-menu"></div>`;
+      shell.innerHTML = `
+        <button type="button" class="select-button" aria-haspopup="listbox" aria-expanded="false">
+          <span data-select-label></span>
+          ${icon("chevron-down")}
+        </button>`;
       select.insertAdjacentElement("afterend", shell);
-    }
+      select._selectShell = shell;
+      const button = shell.querySelector(".select-button");
+      button.id ||= `select-button-${selectIndex}-${Math.random().toString(36).slice(2, 7)}`;
+      select.setAttribute("aria-hidden", "true");
+      select.tabIndex = -1;
 
-    const button = shell.querySelector(".select-button");
-    const menu = shell.querySelector(".select-menu");
-    const updateButton = () => {
-      const selected = select.options[select.selectedIndex];
-      button.textContent = selected ? selected.textContent : "Select option";
-      button.classList.toggle("placeholder", !select.value);
-    };
-
-    menu.innerHTML = Array.from(select.options)
-      .map(
-        (option) => `
-          <button type="button" class="select-option ${option.value === select.value ? "active" : ""}" data-value="${escapeAttr(option.value)}">
-            ${escapeHtml(option.textContent || "")}
-          </button>`
-      )
-      .join("");
-
-    button.onclick = (event) => {
-      event.preventDefault();
-      $$(".select-ui.open").forEach((item) => {
-        if (item !== shell) item.classList.remove("open");
-      });
-      shell.classList.toggle("open");
-    };
-
-    $$(".select-option", menu).forEach((item) => {
-      item.onclick = (event) => {
+      button.addEventListener("click", (event) => {
         event.preventDefault();
-        select.value = item.dataset.value || "";
-        select.dispatchEvent(new Event("input", { bubbles: true }));
-        select.dispatchEvent(new Event("change", { bubbles: true }));
-        shell.classList.remove("open");
-        enhanceSelects();
-      };
-    });
-
-    updateButton();
+        event.stopPropagation();
+        if (activeSelect === select) closeSelectPortal();
+        else openSelectPortal(select);
+      });
+      button.addEventListener("keydown", (event) => {
+        if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+          event.preventDefault();
+          if (activeSelect !== select) openSelectPortal(select);
+          if (event.key === "ArrowDown") moveSelectOption(1);
+          if (event.key === "ArrowUp") moveSelectOption(-1);
+        }
+        if (event.key === "Escape") closeSelectPortal(true);
+      });
+      select.addEventListener("input", () => updateSelectShell(select));
+      select.addEventListener("change", () => updateSelectShell(select));
+    }
+    updateSelectShell(select);
   });
+}
+
+function openSelectPortal(select) {
+  closeSelectPortal();
+  const portal = ensureSelectPortal();
+  activeSelect = select;
+  const options = Array.from(select.options);
+  activeOptionIndex = Math.max(0, select.selectedIndex);
+  portal.innerHTML = options
+    .map((option, index) => `
+      <button
+        type="button"
+        class="select-option ${index === select.selectedIndex ? "active" : ""}"
+        role="option"
+        aria-selected="${index === select.selectedIndex}"
+        data-option-index="${index}"
+        ${option.disabled ? "disabled" : ""}
+      >${escapeHtml(option.textContent || "")}</button>`)
+    .join("");
+  portal.hidden = false;
+  select._selectShell.classList.add("open");
+  updateSelectShell(select);
+  positionSelectPortal();
+
+  $$(".select-option", portal).forEach((button) => {
+    button.addEventListener("mouseenter", () => {
+      activeOptionIndex = Number(button.dataset.optionIndex);
+      highlightSelectOption();
+    });
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      chooseSelectOption(Number(button.dataset.optionIndex));
+    });
+  });
+}
+
+function positionSelectPortal() {
+  if (!activeSelect || !selectPortal || selectPortal.hidden) return;
+  const button = activeSelect._selectShell?.querySelector(".select-button");
+  if (!button) return;
+  const rect = button.getBoundingClientRect();
+  const margin = 8;
+  const availableBelow = window.innerHeight - rect.bottom - margin;
+  const availableAbove = rect.top - margin;
+  const preferredHeight = Math.min(288, Math.max(48, selectPortal.scrollHeight));
+  const openAbove = availableBelow < Math.min(180, preferredHeight) && availableAbove > availableBelow;
+  const maxHeight = Math.max(96, Math.min(288, openAbove ? availableAbove - margin : availableBelow - margin));
+
+  selectPortal.style.left = `${Math.max(margin, Math.min(rect.left, window.innerWidth - rect.width - margin))}px`;
+  selectPortal.style.width = `${rect.width}px`;
+  selectPortal.style.maxHeight = `${maxHeight}px`;
+  selectPortal.style.top = openAbove ? "auto" : `${rect.bottom + margin}px`;
+  selectPortal.style.bottom = openAbove ? `${window.innerHeight - rect.top + margin}px` : "auto";
+}
+
+function moveSelectOption(direction) {
+  if (!activeSelect || !selectPortal) return;
+  const options = Array.from(activeSelect.options);
+  let next = activeOptionIndex;
+  do {
+    next = (next + direction + options.length) % options.length;
+  } while (options[next]?.disabled && next !== activeOptionIndex);
+  activeOptionIndex = next;
+  highlightSelectOption();
+}
+
+function highlightSelectOption() {
+  if (!selectPortal) return;
+  $$(".select-option", selectPortal).forEach((button) => {
+    const active = Number(button.dataset.optionIndex) === activeOptionIndex;
+    button.classList.toggle("focused", active);
+    if (active) button.scrollIntoView({ block: "nearest" });
+  });
+}
+
+function chooseSelectOption(index) {
+  if (!activeSelect) return;
+  const option = activeSelect.options[index];
+  if (!option || option.disabled) return;
+  activeSelect.selectedIndex = index;
+  activeSelect.dispatchEvent(new Event("input", { bubbles: true }));
+  activeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  closeSelectPortal(true);
+}
+
+function closeSelectPortal(returnFocus = false) {
+  const select = activeSelect;
+  activeSelect = null;
+  activeOptionIndex = -1;
+  if (select?._selectShell) {
+    select._selectShell.classList.remove("open");
+    updateSelectShell(select);
+  }
+  if (selectPortal) {
+    selectPortal.hidden = true;
+    selectPortal.innerHTML = "";
+  }
+  if (returnFocus) select?._selectShell?.querySelector(".select-button")?.focus();
 }
 
 document.addEventListener("click", (event) => {
-  if (!event.target.closest(".select-ui")) {
-    $$(".select-ui.open").forEach((item) => item.classList.remove("open"));
+  if (!event.target.closest(".select-ui") && !event.target.closest(".select-portal")) closeSelectPortal();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!activeSelect) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeSelectPortal(true);
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    moveSelectOption(1);
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    moveSelectOption(-1);
+  } else if (event.key === "Home") {
+    event.preventDefault();
+    activeOptionIndex = 0;
+    highlightSelectOption();
+  } else if (event.key === "End") {
+    event.preventDefault();
+    activeOptionIndex = activeSelect.options.length - 1;
+    highlightSelectOption();
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    chooseSelectOption(activeOptionIndex);
   }
 });
 
+window.addEventListener("resize", positionSelectPortal);
+document.addEventListener("scroll", positionSelectPortal, true);
+
+function providerLabel(provider) {
+  return { gemini: "Gemini", openrouter: "OpenRouter", groq: "Groq" }[provider] || provider;
+}
+
 function renderProviders() {
-  const providers = state.config.ai.providerOrder || [];
-  $("#provider-list").innerHTML = providers
-    .map((provider, index) => `<div class="command-toggle"><strong>${index + 1}. ${provider}</strong><small>fallback provider</small></div>`)
-    .join("");
+  const list = $("#provider-list");
+  if (!list || !state.config?.ai) return;
+  const providers = Array.isArray(state.config.ai.providerOrder) ? state.config.ai.providerOrder : [];
+  const availability = state.health?.providers || {};
+  list.innerHTML = providers.length
+    ? providers.map((provider, index) => {
+        const configured = Boolean(availability[provider]);
+        return `<div class="provider-row">
+          <span class="provider-rank">${index + 1}</span>
+          <div class="provider-copy"><strong>${escapeHtml(providerLabel(provider))}</strong><small class="provider-status ${configured ? "ok" : "bad"}">${configured ? "Configured and available" : "No backend API key detected"}</small></div>
+          <div class="provider-actions">
+            <button class="icon-button" type="button" data-provider-up="${index}" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeAttr(providerLabel(provider))} up">${icon("arrow-up")}</button>
+            <button class="icon-button" type="button" data-provider-down="${index}" ${index === providers.length - 1 ? "disabled" : ""} aria-label="Move ${escapeAttr(providerLabel(provider))} down">${icon("arrow-down")}</button>
+          </div>
+        </div>`;
+      }).join("")
+    : `<p class="muted">No providers are listed. Reset the order to restore the defaults.</p>`;
+
+  $$('[data-provider-up]', list).forEach((button) => {
+    button.onclick = () => moveProvider(Number(button.dataset.providerUp), -1);
+  });
+  $$('[data-provider-down]', list).forEach((button) => {
+    button.onclick = () => moveProvider(Number(button.dataset.providerDown), 1);
+  });
+}
+
+function moveProvider(index, direction) {
+  const providers = [...(state.config?.ai?.providerOrder || [])];
+  const target = index + direction;
+  if (target < 0 || target >= providers.length) return;
+  [providers[index], providers[target]] = [providers[target], providers[index]];
+  state.config.ai.providerOrder = providers;
+  syncBoundControls("ai.providerOrder", providers, null);
+  renderProviders();
+  setDirty(true);
+}
+
+function resetProviderOrder() {
+  if (!state.config?.ai) return;
+  state.config.ai.providerOrder = ["gemini", "openrouter", "groq"];
+  syncBoundControls("ai.providerOrder", state.config.ai.providerOrder, null);
+  renderProviders();
+  setDirty(true);
 }
 
 function renderCommands() {
+  const grid = $("#commands-grid");
+  if (!grid || !state.config) return;
   const commands = state.config.commands || {};
-  $("#commands-grid").innerHTML = Object.entries(commands)
-    .map(
+  const query = String($("#command-search-input")?.value || "").trim().toLowerCase();
+  const entries = Object.entries(commands).filter(([name]) => !query || name.toLowerCase().includes(query));
+  grid.innerHTML = entries.length
+    ? entries.map(
       ([name, enabled]) => `
       <div class="command-toggle">
         <div>
-          <strong>/${name}</strong>
+          <strong>/${escapeHtml(name)}</strong>
           <small>${enabled ? "Enabled" : "Disabled"}</small>
         </div>
         <label class="switch">
-          <input type="checkbox" data-command="${name}" ${enabled ? "checked" : ""}>
+          <input type="checkbox" data-command="${escapeAttr(name)}" ${enabled ? "checked" : ""}>
           <span></span>
         </label>
       </div>`
-    )
-    .join("");
+    ).join("")
+    : `<div class="media-empty">${icon("search")}<strong>No matching commands</strong><span>Try another command name.</span></div>`;
 
-  $$("[data-command]").forEach((input) => {
+  $$("[data-command]", grid).forEach((input) => {
     input.onchange = () => {
       state.config.commands[input.dataset.command] = input.checked;
+      setDirty(true);
       renderCommands();
     };
   });
+}
+
+function setAllCommands(enabled) {
+  if (!state.config?.commands) return;
+  Object.keys(state.config.commands).forEach((name) => {
+    state.config.commands[name] = Boolean(enabled);
+  });
+  renderCommands();
+  setDirty(true);
 }
 
 function renderTriggers() {
@@ -500,6 +1099,7 @@ function renderTriggers() {
       } else {
         trigger[field] = input.value;
       }
+      setDirty(true);
     };
   });
 
@@ -507,6 +1107,7 @@ function renderTriggers() {
     button.onclick = () => {
       state.config.triggers = state.config.triggers.filter((item) => item.id !== button.dataset.removeTrigger);
       renderTriggers();
+      setDirty(true);
     };
   });
 }
@@ -531,7 +1132,7 @@ function triggerTemplate(trigger) {
           <input type="checkbox" data-trigger-id="${trigger.id}" data-trigger-field="enabled" ${trigger.enabled !== false ? "checked" : ""}>
           <span></span>
         </label>
-        <button class="ghost danger" data-remove-trigger="${trigger.id}">Remove</button>
+        <button class="ghost danger" data-remove-trigger="${trigger.id}">${icon("trash")}<span>Remove</span></button>
       </div>
       <label style="grid-column: 1 / -1">
         Response text
@@ -564,6 +1165,7 @@ async function saveConfig() {
     method: "PUT",
     body: JSON.stringify({ config: state.config }),
   });
+  setDirty(false);
   toast("Saved. Conan-coded settings updated.");
   await refreshAll();
 }
@@ -583,6 +1185,7 @@ function addTrigger() {
     enabled: true,
   });
   renderTriggers();
+  setDirty(true);
 }
 
 async function syncCommands() {
@@ -646,6 +1249,59 @@ async function saveAndApplyPresence() {
 }
 
 
+function renderEmbedPreview() {
+  const appearance = state.config?.appearance || {};
+  const accent = String(appearance.accentColor || "#67e8f9").trim();
+  const safeAccent = /^#[0-9a-f]{6}$/i.test(accent) || /^#[0-9a-f]{3}$/i.test(accent) ? accent : "#67e8f9";
+  document.documentElement.style.setProperty("--accent", safeAccent);
+  const preview = $("#embed-preview");
+  const title = $("#embed-preview-title");
+  const footer = $("#embed-preview-footer");
+  if (preview) preview.style.borderLeftColor = safeAccent;
+  if (title) title.textContent = appearance.embedTitle || "A natural reply";
+  if (footer) footer.textContent = appearance.embedFooter || "Conan Gray Bot";
+}
+
+function applyAccentPreset(value) {
+  if (!state.config) return;
+  state.config.appearance ??= {};
+  state.config.appearance.accentColor = value;
+  syncBoundControls("appearance.accentColor", value, null);
+  renderEmbedPreview();
+  setDirty(true);
+}
+
+function bindUiPreferenceControls() {
+  applyUiPreferences();
+  const density = $("#dashboard-density-select");
+  const sidebarMode = $("#dashboard-sidebar-mode-select");
+  const reduceMotion = $("#dashboard-reduce-motion");
+
+  if (density) {
+    density.onchange = () => {
+      document.body.dataset.density = density.value || "comfortable";
+      localStorage.setItem(STORAGE.density, document.body.dataset.density);
+      updateSelectShell(density);
+    };
+  }
+  if (sidebarMode) {
+    sidebarMode.onchange = () => {
+      setSidebarCollapsed(sidebarMode.value === "compact");
+      updateSelectShell(sidebarMode);
+    };
+  }
+  if (reduceMotion) {
+    reduceMotion.onchange = () => {
+      document.body.classList.toggle("reduce-motion", reduceMotion.checked);
+      localStorage.setItem(STORAGE.reduceMotion, reduceMotion.checked ? "1" : "0");
+    };
+  }
+
+  $$('[data-accent-preset]').forEach((button) => {
+    button.onclick = () => applyAccentPreset(button.dataset.accentPreset);
+  });
+}
+
 function escapeAttr(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
@@ -661,29 +1317,71 @@ function init() {
     state.apiBase = fallback;
     localStorage.setItem(STORAGE.apiBase, fallback);
   }
-  $("#api-base-input").value = state.apiBase;
-  $("#dashboard-key-input").value = state.key;
-  $("#guild-id-input").value = state.guildId;
-  $("#connect-btn").onclick = () => connect().catch((error) => toast(error.message));
-  $("#refresh-btn").onclick = () => refreshAll().then(() => toast("Refreshed.")).catch((error) => toast(error.message));
-  $("#save-btn").onclick = () => saveConfig().catch((error) => toast(error.message));
-  $("#add-trigger-btn").onclick = addTrigger;
-  $("#sync-commands-btn").onclick = () => syncCommands().catch((error) => toast(error.message));
-  $("#start-bot-btn").onclick = () => runBotAction("start").catch((error) => toast(error.message));
-  $("#restart-bot-btn").onclick = () => runBotAction("restart").catch((error) => toast(error.message));
-  $("#shutdown-bot-btn").onclick = () => runBotAction("shutdown").catch((error) => toast(error.message));
-  $("#clear-channel-memory-btn").onclick = () => clearMemory(false).catch((error) => toast(error.message));
-  $("#clear-all-memory-btn").onclick = () => clearMemory(true).catch((error) => toast(error.message));
-  $("#pause-ai-btn").onclick = () => runAiAction("pause").catch((error) => toast(error.message));
-  $("#resume-ai-btn").onclick = () => runAiAction("resume").catch((error) => toast(error.message));
-  $("#apply-presence-btn").onclick = () => saveAndApplyPresence().catch((error) => toast(error.message));
-  $("#invite-bot-btn").onclick = () => {
+
+  const apiInput = $("#api-base-input");
+  const keyInput = $("#dashboard-key-input");
+  const guildInput = $("#guild-id-input");
+  if (apiInput) apiInput.value = state.apiBase;
+  if (keyInput) keyInput.value = state.key;
+  if (guildInput) guildInput.value = state.guildId;
+
+  bindUiPreferenceControls();
+  initNavigation();
+  setDirty(false);
+
+  const click = (selector, handler) => {
+    const element = $(selector);
+    if (element) element.onclick = handler;
+  };
+
+  click("#connect-btn", () => connect().catch((error) => toast(error.message)));
+  click("#refresh-btn", () => refreshAll().then(() => toast("Refreshed.")).catch((error) => toast(error.message)));
+  click("#save-btn", () => saveConfig().catch((error) => toast(error.message)));
+  click("#add-trigger-btn", addTrigger);
+  click("#sync-commands-btn", () => syncCommands().catch((error) => toast(error.message)));
+  click("#enable-all-commands-btn", () => setAllCommands(true));
+  click("#disable-all-commands-btn", () => setAllCommands(false));
+  click("#reset-provider-order-btn", resetProviderOrder);
+  click("#start-bot-btn", () => runBotAction("start").catch((error) => toast(error.message)));
+  click("#restart-bot-btn", () => runBotAction("restart").catch((error) => toast(error.message)));
+  click("#shutdown-bot-btn", () => runBotAction("shutdown").catch((error) => toast(error.message)));
+  click("#clear-channel-memory-btn", () => clearMemory(false).catch((error) => toast(error.message)));
+  click("#clear-all-memory-btn", () => clearMemory(true).catch((error) => toast(error.message)));
+  click("#pause-ai-btn", () => runAiAction("pause").catch((error) => toast(error.message)));
+  click("#resume-ai-btn", () => runAiAction("resume").catch((error) => toast(error.message)));
+  click("#apply-presence-btn", () => saveAndApplyPresence().catch((error) => toast(error.message)));
+  click("#refresh-media-btn", () => refreshMedia().then(() => toast("Media library refreshed.")).catch((error) => toast(error.message)));
+
+  const mediaType = $("#media-type-filter");
+  const mediaChannel = $("#media-channel-filter");
+  const mediaSearch = $("#media-search-filter");
+  const commandSearch = $("#command-search-input");
+  if (mediaType) mediaType.onchange = () => refreshMedia().catch((error) => toast(error.message));
+  if (mediaChannel) mediaChannel.onchange = () => refreshMedia().catch((error) => toast(error.message));
+  if (mediaSearch) mediaSearch.oninput = () => renderMedia(state.media);
+  if (commandSearch) commandSearch.oninput = renderCommands;
+
+  $$('[data-test-drive]').forEach((button) => {
+    button.onclick = () => testDrive().catch((error) => toast(error.message));
+  });
+
+  click("#invite-bot-btn", () => {
     const inviteUrl = state.health?.bot?.commandSync?.inviteUrl;
     if (inviteUrl) window.open(inviteUrl, "_blank", "noopener,noreferrer");
     else toast("Connect the dashboard first.");
-  };
-  $$(".nav-item").forEach((button) => (button.onclick = () => showPage(button.dataset.page)));
-  $$("[data-page-link]").forEach((button) => (button.onclick = () => showPage(button.dataset.pageLink)));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      if (state.connected) saveConfig().catch((error) => toast(error.message));
+    }
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (!state.dirty) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
 
   setConnected(false);
 
@@ -696,5 +1394,4 @@ function init() {
       });
   }
 }
-
 init();

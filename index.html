@@ -1,759 +1,899 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Conan Gray Bot Dashboard</title>
-    <link rel="icon" type="image/webp" href="./assets/logo.webp" />
-    <link rel="shortcut icon" type="image/webp" href="./assets/logo.webp" />
-    <link rel="apple-touch-icon" href="./assets/logo.webp" />
-    <link rel="stylesheet" href="/assets/styles.css" />
-  </head>
-  <body>
-    <div class="aurora aurora-one"></div>
-    <div class="aurora aurora-two"></div>
-
-    <main class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true">
-            <img src="./assets/logo.webp" alt="" onerror="this.hidden=true" />
-            <span>CG</span>
-          </div>
-          <div>
-            <p class="eyebrow">Dashboard</p>
-            <h1>Conan Gray Bot</h1>
-          </div>
-        </div>
-
-        <nav class="nav" aria-label="Dashboard sections">
-          <button class="nav-item active" data-page="overview">Overview</button>
-          <button class="nav-item" data-page="ai">AI</button>
-          <button class="nav-item" data-page="triggers">Triggers</button>
-          <button class="nav-item" data-page="commands">Commands</button>
-          <button class="nav-item" data-page="games">Games</button>
-          <button class="nav-item" data-page="admin">Admin</button>
-          <button class="nav-item nav-sub" data-page="game-tictactoe">Tic-tac-toe</button>
-          <button class="nav-item nav-sub" data-page="game-coinflip">Coinflip</button>
-          <button class="nav-item nav-sub" data-page="game-eightball">8-ball</button>
-          <button class="nav-item nav-sub" data-page="game-rps">Rock Paper Scissors</button>
-          <button class="nav-item nav-sub" data-page="game-guesssong">Guess Song</button>
-          <button class="nav-item nav-sub" data-page="game-wyr">Would You Rather</button>
-          <button class="nav-item" data-page="logs">Logs</button>
-        </nav>
-
-        <div class="side-card">
-          <span class="status-dot" id="side-status-dot"></span>
-          <div>
-            <strong id="side-status">Checking...</strong>
-            <small id="side-latency">Waiting for API</small>
-          </div>
-        </div>
-      </aside>
-
-      <section class="content">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Soft-pop chaos control room</p>
-            <h2 id="page-title">Overview</h2>
-          </div>
-          <div class="top-actions">
-            <button class="ghost" id="refresh-btn">Refresh</button>
-            <button class="primary" id="save-btn">Save changes</button>
-          </div>
-        </header>
-
-        <section class="lock-card" id="lock-card">
-          <div>
-            <p class="eyebrow">Connect dashboard</p>
-            <h2>Unlock the dashboard</h2>
-            <p class="muted">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Conan Gray Bot Dashboard</title>
+<link href="./assets/logo.webp" rel="icon" type="image/webp"/>
+<link href="./assets/logo.webp" rel="shortcut icon" type="image/webp"/>
+<link href="./assets/logo.webp" rel="apple-touch-icon"/>
+<link href="/assets/styles.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="aurora aurora-one"></div>
+<div class="aurora aurora-two"></div>
+<main class="app-shell">
+<aside class="sidebar">
+<div class="sidebar-head">
+<div class="brand">
+<div aria-hidden="true" class="brand-mark">
+<img alt="" onerror="this.hidden=true" src="./assets/logo.webp"/>
+<span>CG</span>
+</div>
+<div class="brand-copy">
+<p class="eyebrow">Control center</p>
+<h1>Conan Gray Bot</h1>
+</div>
+</div>
+<button aria-label="Collapse sidebar" class="icon-button sidebar-collapse-button" id="sidebar-collapse-btn" title="Collapse sidebar" type="button">
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/panel-left.svg')"></span>
+</button>
+<button aria-label="Close navigation" class="icon-button mobile-sidebar-close" id="mobile-sidebar-close" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/close.svg')"></span></button></div>
+<div class="sidebar-tools">
+<label class="nav-search" for="nav-search-input">
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/search.svg')"></span>
+<input autocomplete="off" id="nav-search-input" placeholder="Find a setting" type="search"/>
+<kbd>Ctrl K</kbd>
+</label>
+</div>
+<nav aria-label="Dashboard sections" class="nav">
+<div class="nav-group open" data-nav-group="workspace">
+<button aria-expanded="true" class="nav-group-toggle" type="button">
+<span>Workspace</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item active" data-page="overview" title="Overview" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/overview.svg')"></span><span class="nav-label">Overview</span></button>
+<button class="nav-item" data-page="setup-ids" title="Quick setup" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/settings.svg')"></span><span class="nav-label">Quick setup</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="ai">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>AI Studio</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="ai-behavior" title="Behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span class="nav-label">Behavior</span></button>
+<button class="nav-item" data-page="ai-memory" title="Branch memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span class="nav-label">Branch memory</span></button>
+<button class="nav-item" data-page="ai-personality" title="Personality" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/personality.svg')"></span><span class="nav-label">Personality</span></button>
+<button class="nav-item" data-page="ai-messages" title="Replies and embeds" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span class="nav-label">Replies &amp; embeds</span></button>
+<button class="nav-item" data-page="ai-providers" title="AI providers" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/providers.svg')"></span><span class="nav-label">Providers</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="media">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>Media</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="media-library" title="Media library" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span class="nav-label">Library</span></button>
+<button class="nav-item" data-page="media-intake" title="Archive intake" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span class="nav-label">Archive intake</span></button>
+<button class="nav-item" data-page="media-drive" title="Google Drive" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/folder.svg')"></span><span class="nav-label">Google Drive</span></button>
+<button class="nav-item" data-page="triggers" title="Media triggers" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/bolt.svg')"></span><span class="nav-label">Triggers</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="discord">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>Discord</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="commands" title="Slash commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span class="nav-label">Commands</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="games">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>Games</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="games" title="Game hub" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/games.svg')"></span><span class="nav-label">Game hub</span></button>
+<button class="nav-item nav-sub" data-page="game-tictactoe" title="Tic-tac-toe" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">Tic-tac-toe</span></button>
+<button class="nav-item nav-sub" data-page="game-coinflip" title="Coinflip" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">Coinflip</span></button>
+<button class="nav-item nav-sub" data-page="game-eightball" title="8-ball" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">8-ball</span></button>
+<button class="nav-item nav-sub" data-page="game-rps" title="Rock Paper Scissors" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">Rock Paper Scissors</span></button>
+<button class="nav-item nav-sub" data-page="game-guesssong" title="Guess the Song" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">Guess the Song</span></button>
+<button class="nav-item nav-sub" data-page="game-wyr" title="Would You Rather" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span><span class="nav-label">Would You Rather</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="admin">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>Administration</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="admin-permissions" title="Admin permissions" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span class="nav-label">Permissions</span></button>
+<button class="nav-item" data-page="admin-lifecycle" title="Bot lifecycle" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/power.svg')"></span><span class="nav-label">Lifecycle</span></button>
+<button class="nav-item" data-page="admin-memory" title="Memory tools" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span class="nav-label">Memory tools</span></button>
+<button class="nav-item" data-page="admin-presence" title="Discord presence" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/presence.svg')"></span><span class="nav-label">Presence</span></button>
+</div>
+</div>
+<div class="nav-group" data-nav-group="system">
+<button aria-expanded="false" class="nav-group-toggle" type="button">
+<span>System</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
+</button>
+<div class="nav-group-items">
+<button class="nav-item" data-page="appearance" title="Appearance" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/appearance.svg')"></span><span class="nav-label">Appearance</span></button>
+<button class="nav-item" data-page="logs" title="Logs" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/logs.svg')"></span><span class="nav-label">Logs</span></button>
+</div>
+</div>
+<p class="nav-empty" hidden="" id="nav-empty">No matching settings.</p>
+</nav>
+<div class="side-card">
+<span class="status-dot" id="side-status-dot"></span>
+<div class="side-status-copy">
+<strong id="side-status">Checking...</strong>
+<small id="side-latency">Waiting for API</small>
+</div>
+</div>
+</aside><button aria-label="Close navigation" class="sidebar-backdrop" hidden="" id="sidebar-backdrop" type="button"></button>
+<section class="content">
+<header class="topbar">
+<div class="topbar-main">
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-nav-toggle" id="mobile-nav-btn" type="button">
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/menu.svg')"></span>
+</button>
+<div class="topbar-title">
+<div class="breadcrumb"><span id="page-section">Workspace</span><span aria-hidden="true">/</span><span id="page-breadcrumb">Overview</span></div>
+<h2 id="page-title">Overview</h2>
+<p class="page-description" id="page-description">Status, shortcuts, and the most important controls.</p>
+</div>
+</div>
+<div class="top-actions topbar-actions">
+<span class="save-state" id="save-state">All changes saved</span>
+<button class="ghost" id="refresh-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Refresh</span></button>
+<button class="primary" id="save-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/save.svg')"></span><span>Save changes</span></button>
+</div>
+</header>
+<section class="lock-card" id="lock-card">
+<div>
+<p class="eyebrow">Connect dashboard</p>
+<h2>Unlock the dashboard</h2>
+<p class="muted">
               Paste the backend URL and dashboard key configured in Discloud. The key is stored only in this browser.
             </p>
-          </div>
-          <label>
+</div>
+<label>
             Backend API URL
-            <input id="api-base-input" placeholder="https://your-discloud-app.discloud.app" />
-          </label>
-          <label>
+            <input id="api-base-input" placeholder="https://your-discloud-app.discloud.app"/>
+</label>
+<label>
             Dashboard key
-            <input id="dashboard-key-input" type="password" placeholder="••••••••" />
-          </label>
-          <label>
+            <input id="dashboard-key-input" placeholder="••••••••" type="password"/>
+</label>
+<label>
             Guild ID
-            <input id="guild-id-input" placeholder="1513331636362809466" />
-          </label>
-          <button class="primary wide" id="connect-btn">Connect</button>
-        </section>
-
-        <div id="toast" class="toast" role="status"></div>
-
-        <div class="pages" id="pages" hidden>
-          <section class="page active" data-page-panel="overview">
-            <div class="hero-card">
-              <div>
-                <p class="eyebrow">Current mood</p>
-                <h3>Dashboard running, drama contained.</h3>
-                <p class="muted">Configure AI memory, trigger media, commands, games, and status from one place.</p>
-              </div>
-              <div class="hero-pill" id="bot-ready-pill">Bot status unknown</div>
-            </div>
-
-            <div class="grid metrics">
-              <article class="card metric">
-                <span class="metric-label">Bot websocket</span>
-                <strong id="metric-bot">—</strong>
-                <small id="metric-user">Waiting</small>
-              </article>
-              <article class="card metric">
-                <span class="metric-label">Latency</span>
-                <strong id="metric-latency">—</strong>
-                <small>Discord websocket</small>
-              </article>
-              <article class="card metric">
-                <span class="metric-label">Command sync</span>
-                <strong id="metric-sync">—</strong>
-                <small id="metric-sync-detail">Slash commands</small>
-              </article>
-              <article class="card metric">
-                <span class="metric-label">API endpoint</span>
-                <strong id="metric-api">—</strong>
-                <small id="metric-api-detail">Backend URL</small>
-              </article>
-              <article class="card metric metric-wide">
-                <span class="metric-label">AI providers</span>
-                <strong id="metric-providers">—</strong>
-                <small>Gemini → OpenRouter → Groq</small>
-              </article>
-            </div>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Quick setup</p>
-                  <h3>Important IDs</h3>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  AI channel ID
-                  <input data-bind="ai.channelId" placeholder="Channel ID" />
-                </label>
-                <label>
-                  Allowed category ID
-                  <input data-bind="games.allowedCategoryId" placeholder="Category ID" />
-                </label>
-                <label>
-                  Accent color
-                  <input data-bind="appearance.accentColor" placeholder="#67e8f9" />
-                </label>
-                <label>
-                  Bot admin role ID
-                  <input data-bind="admin.roleId" placeholder="1514041404836282460" />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="ai">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Branch memory</p>
-                  <h3>AI channel behavior</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="ai.enabled" />
-                  <span></span>
-                </label>
-              </div>
-              <p class="muted">
-                Each direct @mention starts a fresh memory branch. Replying to the bot's newest message continues that branch, so several people can keep separate conversations in the same channel without mixing context.
-              </p>
-              <div class="form-grid">
-                <label>
-                  AI channel
-                  <select data-bind="ai.channelId" data-channel-select="text"></select>
-                </label>
-                <label>
-                  Reply mode
-                  <select data-bind="ai.replyMode">
-                    <option value="mention_or_reply">Mention or reply</option>
-                    <option value="mention_only">Mention only</option>
-                    <option value="reply_only">Reply only</option>
-                    <option value="all_messages">All channel messages</option>
-                  </select>
-                </label>
-                <label>
-                  Max history messages per branch
-                  <input type="number" min="4" max="80" data-bind="ai.maxHistoryMessages" />
-                </label>
-                <label>
-                  Max output tokens
-                  <input type="number" min="120" max="1600" data-bind="ai.maxOutputTokens" />
-                </label>
-                <label>
-                  Temperature
-                  <input type="number" min="0" max="1.5" step="0.1" data-bind="ai.temperature" />
-                </label>
-                <label>
-                  Channel cooldown (seconds)
-                  <input type="number" min="0" max="3600" data-bind="ai.channelCooldownSeconds" />
-                </label>
-                <label>
-                  Reset keyword
-                  <input data-bind="ai.resetKeyword" placeholder="forget" />
-                </label>
-                <label>
-                  Empty mention prompt
-                  <input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural." />
-                </label>
-                <label class="inline-toggle">
-                  Reset keyword is admin-only
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.resetKeywordAdminOnly" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Show typing indicator
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.typingIndicator" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  @mention starts a fresh branch
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.mentionStartsNewBranch" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Reply continues its latest branch
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.replyContinuesBranch" />
-                    <span></span>
-                  </span>
-                </label>
-              </div>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Natural conversation</p>
-                  <h3>Tone and response structure</h3>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  Tone style
-                  <select data-bind="ai.toneStyle">
-                    <option value="adaptive">Adaptive</option>
-                    <option value="casual">Casual</option>
-                    <option value="supportive">Supportive</option>
-                    <option value="witty">Witty</option>
-                    <option value="direct">Direct</option>
-                  </select>
-                </label>
-                <label>
-                  Response length
-                  <select data-bind="ai.responseLength">
-                    <option value="brief">Brief</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="detailed">Detailed</option>
-                  </select>
-                </label>
-                <label>
-                  Emoji usage
-                  <select data-bind="ai.emojiStyle">
-                    <option value="none">None</option>
-                    <option value="rare">Rare</option>
-                    <option value="occasional">Occasional</option>
-                    <option value="frequent">Frequent</option>
-                  </select>
-                </label>
-                <label>
-                  Markdown structure
-                  <select data-bind="ai.markdownStyle">
-                    <option value="none">None</option>
-                    <option value="minimal">Minimal</option>
-                    <option value="natural">Natural</option>
-                    <option value="structured">Structured</option>
-                  </select>
-                </label>
-              </div>
-              <label>
-                Custom structure instructions
-                <textarea data-bind="ai.structureInstructions" rows="5" placeholder="Example: Start with the direct answer. Use bullets only for 3+ items. Never end with a generic offer."></textarea>
-              </label>
-              <label>
-                Personality prompt
-                <textarea data-bind="ai.personality" rows="8"></textarea>
-              </label>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Message builder</p>
-                  <h3>Reply template and delivery</h3>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  Reply style
-                  <select data-bind="ai.replyStyle">
-                    <option value="embed">Embed</option>
-                    <option value="plain">Plain message</option>
-                  </select>
-                </label>
-                <label>
-                  Maximum characters per message
-                  <input type="number" min="200" max="4000" data-bind="ai.maxDiscordMessageLength" />
-                </label>
-                <label class="inline-toggle">
-                  Split long replies
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.splitLongReplies" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Mention the author
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.mentionAuthor" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Provider in footer
-                  <span class="switch">
-                    <input type="checkbox" data-bind="ai.includeProviderFooter" />
-                    <span></span>
-                  </span>
-                </label>
-                <label class="inline-toggle">
-                  Embed timestamp
-                  <span class="switch">
-                    <input type="checkbox" data-bind="appearance.embedShowTimestamp" />
-                    <span></span>
-                  </span>
-                </label>
-              </div>
-              <label>
-                Message template
-                <textarea data-bind="ai.messageTemplate" rows="5" placeholder="{response}"></textarea>
-              </label>
-              <p class="hint placeholder-guide">Placeholders: <code>{response}</code>, <code>{user}</code>, <code>{mention}</code>, <code>{channel}</code>, <code>{guild}</code>, <code>{provider}</code>. If <code>{response}</code> is omitted, the AI response is appended automatically.</p>
-              <div class="form-grid">
-                <label>
-                  Embed title
-                  <input data-bind="appearance.embedTitle" placeholder="Optional title" />
-                </label>
-                <label>
-                  Embed footer
-                  <input data-bind="appearance.embedFooter" />
-                </label>
-                <label>
-                  Embed thumbnail URL
-                  <input data-bind="appearance.embedThumbnailUrl" placeholder="https://..." />
-                </label>
-                <label>
-                  Accent color
-                  <input data-bind="appearance.accentColor" placeholder="#67e8f9" />
-                </label>
-              </div>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Fallback order</p>
-                  <h3>AI providers</h3>
-                </div>
-              </div>
-              <div class="provider-list" id="provider-list"></div>
-              <p class="hint">Default: Gemini first, then OpenRouter, then Groq.</p>
-              <input data-bind="ai.providerOrder" data-array placeholder="gemini, openrouter, groq" />
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="triggers">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Media displayers</p>
-                  <h3>Trigger words</h3>
-                </div>
-                <button class="ghost" id="add-trigger-btn">Add trigger</button>
-              </div>
-              <div id="triggers-list" class="stack"></div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="commands">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Slash commands</p>
-                  <h3>Enable or disable commands</h3>
-                </div>
-                <div class="top-actions">
-                  <button class="ghost" id="invite-bot-btn" type="button">Fix access</button>
-                  <button class="ghost" id="sync-commands-btn" type="button">Sync commands</button>
-                </div>
-              </div>
-              <div class="notice" id="command-sync-notice" hidden></div>
-              <div class="command-grid" id="commands-grid"></div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="games">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game hub</p>
-                  <h3>Global game settings</h3>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
+            <input id="guild-id-input" placeholder="1513331636362809466"/>
+</label>
+<button class="primary wide" id="connect-btn"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Connect</span></button>
+</section>
+<div class="toast" id="toast" role="status"></div>
+<div class="pages" hidden="" id="pages">
+<section class="page active" data-page-panel="overview">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/overview.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Control room</p>
+<h3>Everything important, without the clutter.</h3>
+<p class="muted">Check the bot, jump into a configuration area, and see which systems need attention.</p>
+</div>
+</div>
+<div class="hero-card">
+<div>
+<p class="eyebrow">Current mood</p>
+<h3>Dashboard running, drama contained.</h3>
+<p class="muted">Every configuration now has its own focused page, with the same layout and controls across the dashboard.</p>
+</div>
+<div class="hero-pill" id="bot-ready-pill">Bot status unknown</div>
+</div>
+<div class="grid metrics">
+<article class="card metric"><span class="metric-label">Bot websocket</span><strong id="metric-bot">—</strong><small id="metric-user">Waiting</small></article>
+<article class="card metric"><span class="metric-label">Latency</span><strong id="metric-latency">—</strong><small>Discord websocket</small></article>
+<article class="card metric"><span class="metric-label">Command sync</span><strong id="metric-sync">—</strong><small id="metric-sync-detail">Slash commands</small></article>
+<article class="card metric"><span class="metric-label">API endpoint</span><strong id="metric-api">—</strong><small id="metric-api-detail">Backend URL</small></article>
+<article class="card metric metric-wide"><span class="metric-label">AI providers</span><strong id="metric-providers">—</strong><small>Gemini → OpenRouter → Groq</small></article>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Configuration map</p><h3>Choose what to customize</h3></div></div>
+<div class="shortcut-grid">
+<button class="shortcut-card" data-page-link="ai-behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span><strong>AI behavior</strong><small>Channels, reply modes, output limits, and cooldowns.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="ai-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span><strong>Branch memory</strong><small>Mention-created branches, reply continuation, and reset rules.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="media-library" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span><strong>Media archive</strong><small>Browse photos and videos stored in Google Drive.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span><strong>Commands</strong><small>Enable, disable, search, and synchronize slash commands.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/games.svg')"></span><span><strong>Games</strong><small>Global rules and dedicated pages for every game.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="admin-lifecycle" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/power.svg')"></span><span><strong>Bot controls</strong><small>Start, restart, stop, pause, or resume the bot.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="setup-ids">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/settings.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Workspace setup</p>
+<h3>Important IDs and connections</h3>
+<p class="muted">Keep the main Discord targets in one place. Changes here synchronize with their dedicated pages.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Quick setup</p><h3>Discord targets</h3></div></div>
+<div class="form-grid">
+<label>AI channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
+<label>Media channel<select data-bind="media.channelId" data-channel-select="text"></select></label>
+<label>Games/media category<select data-bind="games.allowedCategoryId" data-category-select=""></select></label>
+<label>Bot admin role ID<input data-bind="admin.roleId" placeholder="1514041404836282460"/></label>
+<label class="form-span-two">Google Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Configuration paths</p><h3>Continue with detailed settings</h3></div></div>
+<div class="shortcut-grid compact-shortcuts">
+<button class="shortcut-card" data-page-link="ai-behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span><strong>AI channel behavior</strong><small>Reply modes and response controls.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="media-intake" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span><strong>Media intake</strong><small>Attachment rules and notification templates.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="media-drive" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/folder.svg')"></span><span><strong>Google Drive</strong><small>Folder access and connection testing.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="admin-permissions" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span><strong>Admin access</strong><small>Role gating and command messages.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="ai-behavior">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Behavior and response engine</h3>
+<p class="muted">Control where the bot responds, how it is triggered, and how much it generates.</p>
+</div>
+<div class="page-intro-actions"><label class="switch labeled-switch"><span class="switch-label">AI enabled</span><input data-bind="ai.enabled" type="checkbox"/><span></span></label></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Channel behavior</p><h3>Response routing</h3></div></div>
+<div class="form-grid">
+<label>AI channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
+<label>Reply mode<select data-bind="ai.replyMode"><option value="mention_or_reply">Mention or reply</option><option value="mention_only">Mention only</option><option value="reply_only">Reply only</option><option value="all_messages">All channel messages</option></select></label>
+<label>Channel cooldown (seconds)<input data-bind="ai.channelCooldownSeconds" max="3600" min="0" type="number"/></label>
+<label>Empty mention prompt<input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural."/></label>
+<label class="inline-toggle">Show typing indicator<span class="switch"><input data-bind="ai.typingIndicator" type="checkbox"/><span></span></span></label>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Generation</p><h3>Output controls</h3></div></div>
+<div class="form-grid">
+<label>Maximum output tokens<input data-bind="ai.maxOutputTokens" max="1600" min="120" type="number"/></label>
+<label>Temperature<input data-bind="ai.temperature" max="1.5" min="0" step="0.1" type="number"/></label>
+</div>
+<div class="setting-note">Higher temperature makes responses more varied. Lower values are more predictable and direct.</div>
+</article>
+</section>
+<section class="page" data-page-panel="ai-memory">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Branch memory</h3>
+<p class="muted">A direct mention starts a clean branch; a reply to the newest bot message continues that branch.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="admin-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/trash.svg')"></span><span>Memory tools</span></button></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Branch routing</p><h3>Conversation continuity</h3></div></div>
+<div class="form-grid">
+<label>Maximum history messages per branch<input data-bind="ai.maxHistoryMessages" max="80" min="4" type="number"/></label>
+<label class="inline-toggle">@mention starts a fresh branch<span class="switch"><input data-bind="ai.mentionStartsNewBranch" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Reply continues its latest branch<span class="switch"><input data-bind="ai.replyContinuesBranch" type="checkbox"/><span></span></span></label>
+</div>
+<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span>Each branch is isolated. Multiple people can talk in the same channel without importing one another’s context.</span></div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Reset behavior</p><h3>Memory reset keyword</h3></div></div>
+<div class="form-grid">
+<label>Reset keyword<input data-bind="ai.resetKeyword" placeholder="forget"/></label>
+<label class="inline-toggle">Reset keyword is admin-only<span class="switch"><input data-bind="ai.resetKeywordAdminOnly" type="checkbox"/><span></span></span></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="ai-personality">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/personality.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Personality and writing style</h3>
+<p class="muted">Tune the bot’s natural voice, formatting habits, emotional tone, and response structure.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Natural conversation</p><h3>Tone controls</h3></div></div>
+<div class="form-grid">
+<label>Tone style<select data-bind="ai.toneStyle"><option value="adaptive">Adaptive</option><option value="natural">Natural</option><option value="casual">Casual</option><option value="supportive">Supportive</option><option value="witty">Witty</option><option value="direct">Direct</option></select></label>
+<label>Response length<select data-bind="ai.responseLength"><option value="brief">Brief</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></label>
+<label>Emoji usage<select data-bind="ai.emojiStyle"><option value="none">None</option><option value="rare">Rare</option><option value="occasional">Occasional</option><option value="frequent">Frequent</option></select></label>
+<label>Markdown structure<select data-bind="ai.markdownStyle"><option value="none">None</option><option value="minimal">Minimal</option><option value="natural">Natural</option><option value="structured">Structured</option></select></label>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Instructions</p><h3>Structure and personality prompts</h3></div></div>
+<label>Custom structure instructions<textarea data-bind="ai.structureInstructions" placeholder="Start with the direct answer. Use bullets only for 3+ items. Never end with a generic offer." rows="5"></textarea></label>
+<label>Personality prompt<textarea data-bind="ai.personality" rows="9"></textarea></label>
+</article>
+</section>
+<section class="page" data-page-panel="ai-messages">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Replies, templates, and embeds</h3>
+<p class="muted">Build the final Discord message around the AI response and control how long replies are delivered.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Delivery</p><h3>Message behavior</h3></div></div>
+<div class="form-grid">
+<label>Reply style<select data-bind="ai.replyStyle"><option value="embed">Embed</option><option value="plain">Plain message</option></select></label>
+<label>Maximum characters per message<input data-bind="ai.maxDiscordMessageLength" max="4000" min="200" type="number"/></label>
+<label class="inline-toggle">Split long replies<span class="switch"><input data-bind="ai.splitLongReplies" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Mention the author<span class="switch"><input data-bind="ai.mentionAuthor" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Provider in footer<span class="switch"><input data-bind="ai.includeProviderFooter" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Message builder</p><h3>Template</h3></div></div>
+<label>Message template<textarea data-bind="ai.messageTemplate" placeholder="{response}" rows="6"></textarea></label>
+<p class="hint placeholder-guide">Placeholders: <code>{response}</code>, <code>{user}</code>, <code>{mention}</code>, <code>{channel}</code>, <code>{guild}</code>, <code>{provider}</code>. If <code>{response}</code> is omitted, the response is appended automatically.</p>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Embed styling</p><h3>Discord appearance</h3></div><button class="ghost" data-page-link="appearance" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/appearance.svg')"></span><span>Full appearance page</span></button></div>
+<div class="form-grid">
+<label>Embed title<input data-bind="appearance.embedTitle" placeholder="Optional title"/></label>
+<label>Embed footer<input data-bind="appearance.embedFooter"/></label>
+<label>Embed thumbnail URL<input data-bind="appearance.embedThumbnailUrl" placeholder="https://..."/></label>
+<label>Accent color<input data-bind="appearance.accentColor" placeholder="#67e8f9"/></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="ai-providers">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/providers.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Provider priority</h3>
+<p class="muted">Choose the order used when a provider is unavailable. Credentials remain in backend environment variables.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Fallback order</p><h3>AI providers</h3></div><button class="ghost" id="reset-provider-order-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Reset order</span></button></div>
+<div class="provider-list provider-priority-list" id="provider-list"></div>
+<label>Provider order<input data-array="" data-bind="ai.providerOrder" placeholder="gemini, openrouter, groq"/></label>
+<p class="hint">The bot tries providers from top to bottom. Unconfigured providers are skipped automatically.</p>
+</article>
+</section>
+<section class="page" data-page-panel="media-library">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Media</p>
+<h3>Archive library</h3>
+<p class="muted">Browse and manage photos and videos copied from Discord into Google Drive.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" id="refresh-media-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Refresh library</span></button></div>
+</div>
+<div class="grid metrics media-metrics">
+<article class="card metric"><span class="metric-label">Archived files</span><strong id="media-file-count">0</strong><small>Tracked by the dashboard</small></article>
+<article class="card metric"><span class="metric-label">Photos</span><strong id="media-image-count">0</strong><small>Image attachments</small></article>
+<article class="card metric"><span class="metric-label">Videos</span><strong id="media-video-count">0</strong><small>Video attachments</small></article>
+<article class="card metric"><span class="metric-label">Stored size</span><strong id="media-total-size">0 B</strong><small>Indexed file sizes</small></article>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Filters</p><h3>Stored media</h3></div><button class="ghost" data-page-link="media-intake" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span>Archive settings</span></button></div>
+<div class="media-toolbar media-toolbar-three">
+<label>Search<input id="media-search-filter" placeholder="Filename, user, or channel" type="search"/></label>
+<label>Media type<select id="media-type-filter"><option value="">All media</option><option value="image">Photos</option><option value="video">Videos</option></select></label>
+<label>Discord channel<select id="media-channel-filter"></select></label>
+</div>
+<div aria-live="polite" class="media-grid" id="media-list"></div>
+</article>
+</section>
+<section class="page" data-page-panel="media-intake">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Media</p>
+<h3>Discord archive intake</h3>
+<p class="muted">Choose which attachments are uploaded, how they are named, and what the bot says after an upload.</p>
+</div>
+<div class="page-intro-actions"><label class="switch labeled-switch"><span class="switch-label">Archive enabled</span><input data-bind="media.enabled" type="checkbox"/><span></span></label></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Archive rules</p><h3>Accepted media</h3></div></div>
+<div class="form-grid">
+<label>Media channel<select data-bind="media.channelId" data-channel-select="text"></select></label>
+<label>Maximum file size (MB)<input data-bind="media.maxFileSizeMb" max="2048" min="1" type="number"/></label>
+<label class="form-span-two">Drive filename template<input data-bind="media.fileNameTemplate" placeholder="{date}_{messageId}_{filename}"/></label>
+<label class="inline-toggle">Archive photos<span class="switch"><input data-bind="media.uploadImages" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Archive videos<span class="switch"><input data-bind="media.uploadVideos" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Public links for uploaded files<span class="switch"><input data-bind="media.makeFilesPublic" type="checkbox"/><span></span></span></label>
+</div>
+<p class="hint placeholder-guide">Filename placeholders: <code>{filename}</code>, <code>{stem}</code>, <code>{ext}</code>, <code>{date}</code>, <code>{time}</code>, <code>{messageId}</code>, <code>{user}</code>, <code>{channel}</code>, <code>{guild}</code>.</p>
+<div class="notice warning-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span>Public links allow anyone with the URL to view the file. Keep this disabled for private archives.</span></div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Discord feedback</p><h3>Upload notifications</h3></div></div>
+<div class="form-grid">
+<label class="inline-toggle">Confirm successful uploads<span class="switch"><input data-bind="media.notifyOnUpload" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Report failed uploads<span class="switch"><input data-bind="media.notifyOnFailure" type="checkbox"/><span></span></span></label>
+<label>Upload confirmation message<input data-bind="media.successMessageTemplate"/></label>
+<label>Upload failure message<input data-bind="media.failureMessageTemplate"/></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="media-drive">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/folder.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Media</p>
+<h3>Google Drive connection</h3>
+<p class="muted">Select the destination folder, verify service-account access, and test the connection.</p>
+</div>
+<div class="page-intro-actions"><span class="hero-pill" id="drive-status-pill">Drive status unknown</span></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Destination</p><h3>Drive folder</h3></div><button class="ghost" data-test-drive="" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span>Save &amp; test folder</span></button></div>
+<label>Google Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
+<div class="drive-summary">
+<div><small>Service account</small><strong id="drive-service-account">Not configured</strong></div>
+<div><small>Folder</small><strong id="drive-folder-summary">Not selected</strong></div>
+<div><small>Service account to invite</small><strong id="settings-drive-service-account">Not configured</strong></div>
+<div><small>Credential source</small><strong id="settings-drive-credential-state">Checking</strong></div>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Access checklist</p><h3>Private credentials, public controls</h3></div></div>
+<p class="muted">Credentials remain in backend environment variables and are never stored in the dashboard configuration.</p>
+<div class="checklist">
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Enable the Google Drive API for the service-account project.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Share the destination folder with the service-account email as Editor.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Save the folder ID, then run the connection test.</span></div>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="triggers">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/bolt.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Media</p>
+<h3>Trigger words</h3>
+<p class="muted">Map words to media URLs and optional response text.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Media displayers</p>
+<h3>Trigger words</h3>
+</div>
+<button class="ghost" id="add-trigger-btn"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/plus.svg')"></span><span>Add trigger</span></button>
+</div>
+<div class="stack" id="triggers-list"></div>
+</article>
+</section><section class="page" data-page-panel="commands">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Discord</p>
+<h3>Slash commands</h3>
+<p class="muted">Enable or disable individual commands, then synchronize them with Discord.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Slash commands</p>
+<h3>Enable or disable commands</h3>
+</div>
+<div class="top-actions"><button class="ghost" id="enable-all-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Enable all</span></button><button class="ghost" id="disable-all-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/close.svg')"></span><span>Disable all</span></button>
+<button class="ghost" id="invite-bot-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/external-link.svg')"></span><span>Fix access</span></button>
+<button class="ghost" id="sync-commands-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Sync commands</span></button>
+</div>
+</div>
+<div class="notice" hidden="" id="command-sync-notice"></div><label class="command-search">Search commands<input id="command-search-input" placeholder="Type a command name" type="search"/></label>
+<div class="command-grid" id="commands-grid"></div>
+</article>
+</section><section class="page" data-page-panel="games">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/games.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Games</p>
+<h3>Game hub</h3>
+<p class="muted">Set global limits and open a dedicated page for each game.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game hub</p>
+<h3>Global game settings</h3>
+</div>
+</div>
+<div class="form-grid">
+<label>
                   Games/media category
-                  <select data-bind="games.allowedCategoryId" data-category-select></select>
-                </label>
-                <label>
+                  <select data-bind="games.allowedCategoryId" data-category-select=""></select>
+</label>
+<label>
                   Max active games/channel
-                  <input type="number" min="1" max="10" data-bind="games.maxActiveGamesPerChannel" />
-                </label>
-              </div>
-            </article>
-
-            <div class="game-grid">
-              <button class="game-card" type="button" data-page-link="game-tictactoe">
-                <span>Tic-tac-toe</span>
-                <small>Board behavior, bot opponent, win/draw messages.</small>
-              </button>
-              <button class="game-card" type="button" data-page-link="game-coinflip">
-                <span>Coinflip</span>
-                <small>Labels and result message.</small>
-              </button>
-              <button class="game-card" type="button" data-page-link="game-eightball">
-                <span>8-ball</span>
-                <small>Custom answer pool.</small>
-              </button>
-              <button class="game-card" type="button" data-page-link="game-rps">
-                <span>Rock Paper Scissors</span>
-                <small>Win/lose/draw responses.</small>
-              </button>
-              <button class="game-card" type="button" data-page-link="game-guesssong">
-                <span>Guess the Song</span>
-                <small>Prompt and hint list.</small>
-              </button>
-              <button class="game-card" type="button" data-page-link="game-wyr">
-                <span>Would You Rather</span>
-                <small>Question pool and enable state.</small>
-              </button>
-            </div>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Embeds</p>
-                  <h3>Appearance</h3>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  Accent color
-                  <input data-bind="appearance.accentColor" />
-                </label>
-                <label>
-                  Footer text
-                  <input data-bind="appearance.embedFooter" />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-tictactoe">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>Tic-tac-toe</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.ticTacToeEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <div class="form-grid">
-                <label class="inline-toggle">
+                  <input data-bind="games.maxActiveGamesPerChannel" max="10" min="1" type="number"/>
+</label>
+</div>
+</article>
+<div class="game-grid">
+<button class="game-card" data-page-link="game-tictactoe" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>Tic-tac-toe</span>
+<small>Board behavior, bot opponent, win/draw messages.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="game-card" data-page-link="game-coinflip" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>Coinflip</span>
+<small>Labels and result message.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="game-card" data-page-link="game-eightball" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>8-ball</span>
+<small>Custom answer pool.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="game-card" data-page-link="game-rps" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>Rock Paper Scissors</span>
+<small>Win/lose/draw responses.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="game-card" data-page-link="game-guesssong" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>Guess the Song</span>
+<small>Prompt and hint list.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="game-card" data-page-link="game-wyr" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
+<span>Would You Rather</span>
+<small>Question pool and enable state.</small>
+<span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+</div>
+</section><section class="page" data-page-panel="game-tictactoe">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>Tic-tac-toe</h3>
+<p class="muted">Board behavior, bot opponents, and win or draw messages.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>Tic-tac-toe</h3>
+</div>
+<label class="switch">
+<input data-bind="games.ticTacToeEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<div class="form-grid">
+<label class="inline-toggle">
                   Allow bot opponent
                   <span class="switch">
-                    <input type="checkbox" data-bind="games.ticTacToeAllowBotOpponent" />
-                    <span></span>
-                  </span>
-                </label>
-                <label>
+<input data-bind="games.ticTacToeAllowBotOpponent" type="checkbox"/>
+<span></span>
+</span>
+</label>
+<label>
                   Win message
-                  <input data-bind="games.ticTacToeWinMessage" placeholder="{winner} won. The drama has concluded." />
-                </label>
-                <label>
+                  <input data-bind="games.ticTacToeWinMessage" placeholder="{winner} won. The drama has concluded."/>
+</label>
+<label>
                   Draw message
-                  <input data-bind="games.ticTacToeDrawMessage" placeholder="Tic-tac-toe ended in a draw." />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-coinflip">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>Coinflip</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.coinflipEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <div class="form-grid">
-                <label>
+                  <input data-bind="games.ticTacToeDrawMessage" placeholder="Tic-tac-toe ended in a draw."/>
+</label>
+</div>
+</article>
+</section><section class="page" data-page-panel="game-coinflip">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>Coinflip</h3>
+<p class="muted">Customize result labels and the message shown after every flip.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>Coinflip</h3>
+</div>
+<label class="switch">
+<input data-bind="games.coinflipEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<div class="form-grid">
+<label>
                   Heads label
-                  <input data-bind="games.coinflipHeadsLabel" placeholder="Heads" />
-                </label>
-                <label>
+                  <input data-bind="games.coinflipHeadsLabel" placeholder="Heads"/>
+</label>
+<label>
                   Tails label
-                  <input data-bind="games.coinflipTailsLabel" placeholder="Tails" />
-                </label>
-                <label>
+                  <input data-bind="games.coinflipTailsLabel" placeholder="Tails"/>
+</label>
+<label>
                   Result message
-                  <input data-bind="games.coinflipMessage" placeholder="The universe made a tiny decision." />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-eightball">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>8-ball</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.eightballEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <label>
+                  <input data-bind="games.coinflipMessage" placeholder="The universe made a tiny decision."/>
+</label>
+</div>
+</article>
+</section><section class="page" data-page-panel="game-eightball">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>8-ball</h3>
+<p class="muted">Manage the answer pool used by the magic 8-ball command.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>8-ball</h3>
+</div>
+<label class="switch">
+<input data-bind="games.eightballEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<label>
                 Answer pool
-                <textarea data-bind="games.eightballAnswers" data-lines rows="8" placeholder="One answer per line"></textarea>
-              </label>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-rps">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>Rock Paper Scissors</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.rpsEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <div class="form-grid">
-                <label>
+                <textarea data-bind="games.eightballAnswers" data-lines="" placeholder="One answer per line" rows="8"></textarea>
+</label>
+</article>
+</section><section class="page" data-page-panel="game-rps">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>Rock Paper Scissors</h3>
+<p class="muted">Customize win, loss, and draw responses.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>Rock Paper Scissors</h3>
+</div>
+<label class="switch">
+<input data-bind="games.rpsEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<div class="form-grid">
+<label>
                   Win message
-                  <input data-bind="games.rpsWinMessage" />
-                </label>
-                <label>
+                  <input data-bind="games.rpsWinMessage"/>
+</label>
+<label>
                   Lose message
-                  <input data-bind="games.rpsLoseMessage" />
-                </label>
-                <label>
+                  <input data-bind="games.rpsLoseMessage"/>
+</label>
+<label>
                   Draw message
-                  <input data-bind="games.rpsDrawMessage" />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-guesssong">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>Guess the Song</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.guessSongEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <label>
+                  <input data-bind="games.rpsDrawMessage"/>
+</label>
+</div>
+</article>
+</section><section class="page" data-page-panel="game-guesssong">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>Guess the Song</h3>
+<p class="muted">Configure the prompt and hint pool for song guessing.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>Guess the Song</h3>
+</div>
+<label class="switch">
+<input data-bind="games.guessSongEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<label>
                 Prompt
-                <input data-bind="games.guessSongPrompt" />
-              </label>
-              <label>
+                <input data-bind="games.guessSongPrompt"/>
+</label>
+<label>
                 Hint pool
-                <textarea data-bind="games.guessSongHints" data-lines rows="8" placeholder="One hint per line"></textarea>
-              </label>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="game-wyr">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Game config</p>
-                  <h3>Would You Rather</h3>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" data-bind="games.wouldYouRatherEnabled" />
-                  <span></span>
-                </label>
-              </div>
-              <label>
+                <textarea data-bind="games.guessSongHints" data-lines="" placeholder="One hint per line" rows="8"></textarea>
+</label>
+</article>
+</section><section class="page" data-page-panel="game-wyr">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Game configuration</p>
+<h3>Would You Rather</h3>
+<p class="muted">Manage the question pool and enable state.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" data-page-link="games" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-left.svg')"></span><span>Game hub</span></button></div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Game config</p>
+<h3>Would You Rather</h3>
+</div>
+<label class="switch">
+<input data-bind="games.wouldYouRatherEnabled" type="checkbox"/>
+<span></span>
+</label>
+</div>
+<label>
                 Question pool
-                <textarea data-bind="games.wouldYouRatherQuestions" data-lines rows="8" placeholder="One question per line"></textarea>
-              </label>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="admin">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Discord permissions</p>
-                  <h3>Admin-only commands</h3>
-                </div>
-                <span class="hero-pill" id="admin-role-pill">Role not loaded</span>
-              </div>
-              <p class="muted">Discord commands are available only to members with the configured role. Dashboard actions remain protected by the dashboard key.</p>
-              <div class="form-grid">
-                <label>
-                  Admin role ID
-                  <input data-bind="admin.roleId" placeholder="1514041404836282460" />
-                </label>
-                <label>
-                  Permission denied message
-                  <input data-bind="admin.deniedMessage" />
-                </label>
-                <label>
-                  Memory cleared message
-                  <input data-bind="admin.memoryClearedMessage" />
-                </label>
-                <label>
-                  Restart confirmation message
-                  <input data-bind="admin.restartMessage" />
-                </label>
-                <label>
-                  Shutdown confirmation message
-                  <input data-bind="admin.shutdownMessage" />
-                </label>
-              </div>
-            </article>
-
-            <article class="card danger-zone">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Lifecycle</p>
-                  <h3>Bot controls</h3>
-                </div>
-                <strong id="admin-bot-status">Unknown</strong>
-              </div>
-              <div class="action-grid">
-                <button class="ghost" id="start-bot-btn" type="button">Start bot</button>
-                <button class="ghost" id="restart-bot-btn" type="button">Restart bot</button>
-                <button class="danger" id="shutdown-bot-btn" type="button">Shutdown bot</button>
-                <button class="ghost" id="pause-ai-btn" type="button">Pause AI</button>
-                <button class="ghost" id="resume-ai-btn" type="button">Resume AI</button>
-              </div>
-              <p class="hint">Shutdown stops only the Discord websocket. The API and dashboard stay online so Start bot can reconnect it.</p>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Channel branch memory</p>
-                  <h3>Memory controls</h3>
-                </div>
-                <div class="memory-stats">
-                  <strong id="memory-channel-count">0 channels</strong>
-                  <small id="memory-message-count">0 messages</small>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  Channel memory to clear
-                  <select id="memory-channel-select"></select>
-                </label>
-              </div>
-              <div class="action-grid">
-                <button class="ghost" id="clear-channel-memory-btn" type="button">Clear selected channel</button>
-                <button class="danger" id="clear-all-memory-btn" type="button">Clear all server memory</button>
-              </div>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Discord presence</p>
-                  <h3>Status customization</h3>
-                </div>
-                <button class="ghost" id="apply-presence-btn" type="button">Save & apply</button>
-              </div>
-              <div class="form-grid">
-                <label>
-                  Status
-                  <select data-bind="presence.status">
-                    <option value="online">Online</option>
-                    <option value="idle">Idle</option>
-                    <option value="dnd">Do not disturb</option>
-                    <option value="invisible">Invisible</option>
-                  </select>
-                </label>
-                <label>
-                  Activity type
-                  <select data-bind="presence.activityType">
-                    <option value="playing">Playing</option>
-                    <option value="listening">Listening</option>
-                    <option value="watching">Watching</option>
-                    <option value="competing">Competing</option>
-                  </select>
-                </label>
-                <label>
-                  Activity text
-                  <input data-bind="presence.activityText" placeholder="dramatic bridge sections" />
-                </label>
-              </div>
-            </article>
-          </section>
-
-          <section class="page" data-page-panel="logs">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <p class="eyebrow">Recent events</p>
-                  <h3>Logs</h3>
-                </div>
-              </div>
-              <div id="logs-list" class="logs"></div>
-            </article>
-          </section>
-        </div>
-      </section>
-    </main>
-
-    <script src="/assets/config.js"></script>
-    <script src="/assets/app.js"></script>
-  </body>
+                <textarea data-bind="games.wouldYouRatherQuestions" data-lines="" placeholder="One question per line" rows="8"></textarea>
+</label>
+</article>
+</section>
+<section class="page" data-page-panel="admin-permissions">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Administration</p>
+<h3>Permissions and admin messages</h3>
+<p class="muted">Restrict sensitive commands to one Discord role and customize their feedback.</p>
+</div>
+<div class="page-intro-actions"><span class="hero-pill" id="admin-role-pill">Role not loaded</span></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Discord permissions</p><h3>Admin-only commands</h3></div></div>
+<p class="muted">Discord commands are available only to members with the configured role. Dashboard actions remain protected by the dashboard key.</p>
+<div class="form-grid">
+<label>Admin role ID<input data-bind="admin.roleId" placeholder="1514041404836282460"/></label>
+<label>Permission denied message<input data-bind="admin.deniedMessage"/></label>
+<label>Memory cleared message<input data-bind="admin.memoryClearedMessage"/></label>
+<label>Restart confirmation message<input data-bind="admin.restartMessage"/></label>
+<label>Shutdown confirmation message<input data-bind="admin.shutdownMessage"/></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="admin-lifecycle">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/power.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Administration</p>
+<h3>Bot lifecycle</h3>
+<p class="muted">Start, restart, or stop the Discord connection without taking the dashboard API offline.</p>
+</div>
+<div class="page-intro-actions"><strong class="hero-pill" id="admin-bot-status">Unknown</strong></div>
+</div>
+<article class="card danger-zone">
+<div class="card-head"><div><p class="eyebrow">Discord connection</p><h3>Bot controls</h3></div></div>
+<div class="action-grid">
+<button class="ghost" id="start-bot-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/play.svg')"></span><span>Start bot</span></button>
+<button class="ghost" id="restart-bot-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/restart.svg')"></span><span>Restart bot</span></button>
+<button class="danger" id="shutdown-bot-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/power.svg')"></span><span>Shutdown bot</span></button>
+<button class="ghost" id="pause-ai-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/pause.svg')"></span><span>Pause AI</span></button>
+<button class="ghost" id="resume-ai-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/play.svg')"></span><span>Resume AI</span></button>
+</div>
+<p class="hint">Shutdown stops only the Discord websocket. The API and dashboard stay online so Start bot can reconnect it.</p>
+</article>
+</section>
+<section class="page" data-page-panel="admin-memory">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Administration</p>
+<h3>Memory tools</h3>
+<p class="muted">Inspect stored branch counts and clear one channel or the entire server.</p>
+</div>
+<div class="page-intro-actions"><div class="memory-stats"><strong id="memory-channel-count">0 channels</strong><small id="memory-message-count">0 messages</small></div></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Channel branch memory</p><h3>Clear stored context</h3></div></div>
+<div class="form-grid"><label>Channel memory to clear<select id="memory-channel-select"></select></label></div>
+<div class="action-grid two-actions">
+<button class="ghost" id="clear-channel-memory-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/trash.svg')"></span><span>Clear selected channel</span></button>
+<button class="danger" id="clear-all-memory-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/trash.svg')"></span><span>Clear all server memory</span></button>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="admin-presence">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/presence.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Administration</p>
+<h3>Discord presence</h3>
+<p class="muted">Customize the bot’s status, activity type, and activity text.</p>
+</div>
+<div class="page-intro-actions"><button class="ghost" id="apply-presence-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/save.svg')"></span><span>Save &amp; apply</span></button></div>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Presence</p><h3>Status customization</h3></div></div>
+<div class="form-grid">
+<label>Status<select data-bind="presence.status"><option value="online">Online</option><option value="idle">Idle</option><option value="dnd">Do not disturb</option><option value="invisible">Invisible</option></select></label>
+<label>Activity type<select data-bind="presence.activityType"><option value="playing">Playing</option><option value="listening">Listening</option><option value="watching">Watching</option><option value="competing">Competing</option></select></label>
+<label class="form-span-two">Activity text<input data-bind="presence.activityText" placeholder="dramatic bridge sections"/></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="appearance">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/appearance.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">System</p>
+<h3>Appearance and dashboard layout</h3>
+<p class="muted">Customize Discord embeds and how this dashboard feels on your device.</p>
+</div>
+</div>
+<div class="settings-columns">
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Discord embeds</p><h3>Visual identity</h3></div></div>
+<div class="form-grid">
+<label>Accent color<input data-bind="appearance.accentColor" placeholder="#67e8f9"/></label>
+<label>Embed title<input data-bind="appearance.embedTitle" placeholder="Optional title"/></label>
+<label>Embed footer<input data-bind="appearance.embedFooter"/></label>
+<label>Embed thumbnail URL<input data-bind="appearance.embedThumbnailUrl" placeholder="https://..."/></label>
+<label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
+</div>
+<div aria-label="Accent color presets" class="accent-presets">
+<button aria-label="Cyan accent" data-accent-preset="#67e8f9" style="--preset:#67e8f9" type="button"></button>
+<button aria-label="Purple accent" data-accent-preset="#a78bfa" style="--preset:#a78bfa" type="button"></button>
+<button aria-label="Pink accent" data-accent-preset="#f9a8d4" style="--preset:#f9a8d4" type="button"></button>
+<button aria-label="Green accent" data-accent-preset="#86efac" style="--preset:#86efac" type="button"></button>
+<button aria-label="Gold accent" data-accent-preset="#fcd34d" style="--preset:#fcd34d" type="button"></button>
+</div>
+</article>
+<aside aria-label="Embed preview" class="embed-preview-card">
+<p class="eyebrow">Live preview</p>
+<div class="discord-preview">
+<div class="discord-avatar"><img alt="" src="./assets/logo.webp"/></div>
+<div class="discord-message">
+<div class="discord-author">Conan Gray Bot <span>BOT</span></div>
+<div class="embed-preview" id="embed-preview">
+<strong id="embed-preview-title">A natural reply</strong>
+<p>This is how the bot’s embed styling will look in Discord.</p>
+<small id="embed-preview-footer">Conan Gray Bot</small>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Dashboard preferences</p><h3>Navigation and density</h3></div></div>
+<div class="form-grid">
+<label>Content density<select id="dashboard-density-select"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+<label>Sidebar mode<select id="dashboard-sidebar-mode-select"><option value="expanded">Expanded</option><option value="compact">Compact</option></select></label>
+<label class="inline-toggle">Reduce motion<span class="switch"><input id="dashboard-reduce-motion" type="checkbox"/><span></span></span></label>
+</div>
+<p class="hint">Dashboard preferences are stored in this browser. Bot and embed appearance settings are saved to the server.</p>
+</article>
+</section>
+<section class="page" data-page-panel="logs">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/logs.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">System</p>
+<h3>Logs</h3>
+<p class="muted">Review recent backend events and configuration activity.</p>
+</div>
+</div>
+<article class="card">
+<div class="card-head">
+<div>
+<p class="eyebrow">Recent events</p>
+<h3>Logs</h3>
+</div>
+</div>
+<div class="logs" id="logs-list"></div>
+</article>
+</section></div>
+</section>
+</main>
+<script src="/assets/config.js"></script>
+<script src="/assets/app.js"></script>
+</body>
 </html>
