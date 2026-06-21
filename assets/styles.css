@@ -2487,3 +2487,174 @@ body.reduce-motion *::after {
 #dashboard-key-status.auth-error {
   color: #ff9aae;
 }
+
+/* Per-system message template studio */
+.template-profile-list {
+  display: grid;
+  gap: 14px;
+}
+
+.template-profile-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.template-profile-card > summary {
+  list-style: none;
+}
+
+.template-profile-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.template-profile-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.template-profile-summary > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.template-profile-summary strong {
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.template-profile-summary small {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.template-profile-summary .icon {
+  flex: 0 0 auto;
+  transition: transform 180ms ease;
+}
+
+.template-profile-card[open] .template-profile-summary .icon {
+  transform: rotate(180deg);
+}
+
+.template-profile-body {
+  display: grid;
+  gap: 18px;
+  padding: 0 22px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.template-profile-body > :first-child {
+  margin-top: 20px;
+}
+
+.template-toggle-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.template-style-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.template-profile-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.template-media-options {
+  grid-template-columns: minmax(220px, .8fr) minmax(300px, 1.2fr);
+}
+
+.template-guide-card code {
+  display: inline-flex;
+  margin: 2px 4px 2px 0;
+}
+
+@media (max-width: 980px) {
+  .template-toggle-grid,
+  .template-style-grid,
+  .template-media-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .template-toggle-grid,
+  .template-style-grid,
+  .template-media-options {
+    grid-template-columns: 1fr;
+  }
+
+  .template-profile-summary,
+  .template-profile-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+.template-live-preview-card .card-head {
+  align-items: end;
+}
+
+.compact-select-label {
+  min-width: 210px;
+}
+
+.discord-template-preview {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(6, 16, 24, .72);
+}
+
+.discord-template-author,
+.discord-template-preview small {
+  color: var(--text-muted);
+  font-size: .8rem;
+}
+
+.discord-template-preview > strong {
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.discord-template-preview > p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.discord-template-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.discord-template-fields span {
+  display: grid;
+  gap: 3px;
+  color: var(--text);
+  font-size: .86rem;
+}
+
+.discord-template-fields b {
+  color: var(--text-strong);
+}
+
+@media (max-width: 680px) {
+  .compact-select-label {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .discord-template-fields {
+    grid-template-columns: 1fr;
+  }
+}

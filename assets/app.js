@@ -49,6 +49,7 @@ const PAGE_META = {
   "ai-personality": { section: "AI Studio", title: "Personality", description: "Tone, response length, formatting, and custom instructions." },
   "ai-messages": { section: "AI Studio", title: "Replies & embeds", description: "Message templates, delivery limits, mentions, and embed styling." },
   "ai-actions": { section: "AI Studio", title: "Actions & feedback", description: "Unified embeds, AI game narration, deterministic results, and per-feature fallbacks." },
+  "message-templates": { section: "AI Studio", title: "Message templates", description: "Per-system titles, body wrappers, colors, thumbnails, requester lines, and footers." },
   "ai-providers": { section: "AI Studio", title: "Providers", description: "Fallback priority and provider availability." },
   "media-library": { section: "Media", title: "Library", description: "Browse and manage archived Discord photos and videos." },
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
@@ -69,6 +70,20 @@ const PAGE_META = {
   appearance: { section: "System", title: "Appearance", description: "Discord embed styling and local dashboard preferences." },
   logs: { section: "System", title: "Logs", description: "Recent backend events and configuration activity." },
 };
+
+const TEMPLATE_PROFILES = [
+  { key: "global", name: "Global defaults", description: "The baseline used by every system before its own profile is applied." },
+  { key: "ai", name: "AI conversation", description: "Branch-aware mention and reply responses." },
+  { key: "command", name: "Commands and functions", description: "Utility, music, help, and deterministic command results." },
+  { key: "game", name: "Games", description: "Tic-tac-toe, coinflip, 8-ball, RPS, Guess the Song, and Would You Rather." },
+  { key: "media", name: "Media", description: "Random archive pulls, uploads, and Drive-backed media feedback." },
+  { key: "trigger", name: "Media triggers", description: "Keyword-triggered images, links, and configured responses." },
+  { key: "admin", name: "Administration", description: "Role-gated lifecycle, presence, AI, and memory actions." },
+  { key: "success", name: "Success feedback", description: "Completed actions and healthy status responses." },
+  { key: "warning", name: "Warnings", description: "Wrong channels, disabled features, and recoverable conditions." },
+  { key: "error", name: "Errors", description: "Provider, permission, Drive, and unexpected failures." },
+  { key: "info", name: "General information", description: "Neutral notices that do not map to another system." },
+];
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -427,6 +442,7 @@ async function refreshAll() {
     renderAdminStatus();
     renderCommandSyncNotice();
     renderChannelSelectors();
+    renderTemplateProfiles();
     bindConfigToInputs();
     enhanceSelects();
     renderProviders();
@@ -437,6 +453,7 @@ async function refreshAll() {
     renderTriggers();
     renderLogs(logsData.logs || []);
     renderEmbedPreview();
+    renderTemplatePreview();
     setDirty(false);
   } finally {
     state.refreshing = false;
@@ -878,6 +895,164 @@ function readBoundInput(input) {
   return input.value;
 }
 
+
+function ensureTemplateProfiles() {
+  if (!state.config) return;
+  state.config.messageTemplates ??= {};
+  const baseline = {
+    inheritGlobal: false,
+    useEmbed: true,
+    titleTemplate: "{title}",
+    descriptionTemplate: "{description}",
+    footerTemplate: "{footer}",
+    authorTemplate: "Requested by {actor}",
+    color: "",
+    thumbnailUrl: "",
+    showRequester: true,
+    showTimestamp: true,
+    showFields: true,
+  };
+  const global = { ...baseline, ...(state.config.messageTemplates.global || {}) };
+  state.config.messageTemplates.global = global;
+  TEMPLATE_PROFILES.slice(1).forEach(({ key }) => {
+    const existing = state.config.messageTemplates[key] || {};
+    state.config.messageTemplates[key] = {
+      ...global,
+      ...existing,
+      inheritGlobal: existing.inheritGlobal ?? true,
+    };
+  });
+  state.config.media ??= {};
+  state.config.media.videoDisplayMode ??= "inline_card";
+  state.config.media.videoFallbackMode ??= "embed_attachment";
+  state.config.media.videoAltTextTemplate ??= "{filename} · requested by {actor}";
+}
+
+function templateProfileCard(profile, index) {
+  const path = `messageTemplates.${profile.key}`;
+  const isGlobal = profile.key === "global";
+  const mediaExtras = profile.key === "media" ? `
+    <div class="template-profile-divider"></div>
+    <div class="form-grid template-media-options">
+      <label>Video presentation
+        <select data-bind="media.videoDisplayMode">
+          <option value="inline_card">Inline media card</option>
+          <option value="embed_attachment">Embed + native attachment</option>
+        </select>
+      </label>
+      <label>Video alt-text template<input data-bind="media.videoAltTextTemplate" placeholder="{filename} · requested by {actor}"></label>
+    </div>
+    <p class="hint">Inline media cards use Discord Components V2 so MP4 files render inside the styled message. The bot falls back to an embed and native attachment if Discord rejects the layout.</p>
+  ` : "";
+  return `
+    <details class="card template-profile-card" ${isGlobal || index === 1 ? "open" : ""}>
+      <summary class="template-profile-summary">
+        <span>
+          <span class="eyebrow">${isGlobal ? "Base profile" : "System profile"}</span>
+          <strong>${escapeHtml(profile.name)}</strong>
+          <small>${escapeHtml(profile.description)}</small>
+        </span>
+        ${icon("chevron-down")}
+      </summary>
+      <div class="template-profile-body">
+        <div class="toggle-grid template-toggle-grid">
+          ${isGlobal ? "" : `<label class="inline-toggle"><span>Inherit global profile</span><span class="switch"><input data-bind="${path}.inheritGlobal" type="checkbox"><span></span></span></label>`}
+          <label class="inline-toggle"><span>Use rich embeds/cards</span><span class="switch"><input data-bind="${path}.useEmbed" type="checkbox"><span></span></span></label>
+          <label class="inline-toggle"><span>Show requester</span><span class="switch"><input data-bind="${path}.showRequester" type="checkbox"><span></span></span></label>
+          <label class="inline-toggle"><span>Show timestamp</span><span class="switch"><input data-bind="${path}.showTimestamp" type="checkbox"><span></span></span></label>
+          <label class="inline-toggle"><span>Show detail fields</span><span class="switch"><input data-bind="${path}.showFields" type="checkbox"><span></span></span></label>
+        </div>
+        <div class="form-grid template-style-grid">
+          <label>Accent color<input data-bind="${path}.color" placeholder="Inherit semantic/accent color"></label>
+          <label>Thumbnail URL<input data-bind="${path}.thumbnailUrl" placeholder="https://..."></label>
+          <label>Author line<input data-bind="${path}.authorTemplate" placeholder="Requested by {actor}"></label>
+          <label>Title template<input data-bind="${path}.titleTemplate" placeholder="{title}"></label>
+        </div>
+        <label>Description template<textarea data-bind="${path}.descriptionTemplate" rows="4" placeholder="{description}"></textarea></label>
+        <label>Footer template<textarea data-bind="${path}.footerTemplate" rows="3" placeholder="{footer}"></textarea></label>
+        ${isGlobal ? "" : `<p class="hint">When inheritance is enabled, this system uses the live Global defaults. Turn it off to activate the values stored in this profile.</p>`}
+        ${mediaExtras}
+      </div>
+    </details>`;
+}
+
+function renderTemplateProfiles() {
+  const root = $("#template-profile-list");
+  if (!root || !state.config) return;
+  ensureTemplateProfiles();
+  root.innerHTML = TEMPLATE_PROFILES.map(templateProfileCard).join("");
+}
+
+
+function formatTemplateSample(template, values, fallback = "") {
+  const source = String(template ?? fallback);
+  return source.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key) => key in values ? String(values[key] ?? "") : match);
+}
+
+function renderTemplatePreview() {
+  if (!state.config) return;
+  ensureTemplateProfiles();
+  const select = $("#template-preview-system");
+  const key = select?.value || "global";
+  const globalProfile = state.config.messageTemplates?.global || {};
+  const selectedProfile = state.config.messageTemplates?.[key] || globalProfile;
+  const profile = key !== "global" && selectedProfile.inheritGlobal ? globalProfile : selectedProfile;
+  const appearance = state.config.appearance || {};
+  const samples = {
+    global: ["Conan Gray Bot", "A polished system response appears here."],
+    ai: ["A note from the control room", "I heard the question. The emotional spreadsheet is open."],
+    command: ["Command result", "The function completed without changing any locked facts."],
+    game: ["Game room update", "The result is final. The narration is only here for dramatic lighting."],
+    media: ["Random archive pull", "A Drive-backed video or image is ready inside its media card."],
+    trigger: ["A media cue just fired", "The configured keyword found its moment."],
+    admin: ["Admin control room", "The requested control action has been applied."],
+    success: ["Everything landed", "The operation completed successfully."],
+    warning: ["Small plot complication", "This can be fixed without rewriting the whole story."],
+    error: ["Something went off-script", "The request failed safely and left the exact state intact."],
+    info: ["Conan Gray Bot", "Here is the information you asked for."],
+  };
+  const [baseTitle, baseDescription] = samples[key] || samples.global;
+  const footerBase = appearance.embedFooter || "Conan Gray Bot • soft-pop control room";
+  const values = {
+    title: baseTitle,
+    description: baseDescription,
+    response: baseDescription,
+    footer: footerBase,
+    actor: "Alex",
+    user: "Alex",
+    provider: "gemini",
+    source: "Template preview",
+    kind: key,
+    system: key,
+    filename: "2026-06-21-memory.mp4",
+    mediaType: "video",
+    size: "17 MB",
+    channel: "media",
+    guild: "Conan Gray Community",
+  };
+  const title = formatTemplateSample(profile.titleTemplate, values, baseTitle);
+  const description = formatTemplateSample(profile.descriptionTemplate, values, baseDescription);
+  const footer = formatTemplateSample(profile.footerTemplate, values, footerBase);
+  const author = formatTemplateSample(profile.authorTemplate, values, "Requested by Alex");
+  const semantic = {
+    success: "#4ade80", warning: "#fbbf24", error: "#fb7185", admin: "#a78bfa",
+    media: "#38bdf8", trigger: "#38bdf8", game: "#f472b6",
+  };
+  const color = String(profile.color || semantic[key] || appearance.accentColor || "#67e8f9");
+  const preview = $("#template-live-preview");
+  if (preview) preview.style.borderLeftColor = /^#[0-9a-f]{3,6}$/i.test(color) ? color : "#67e8f9";
+  setText("#template-preview-title", title || baseTitle);
+  setText("#template-preview-description", description || baseDescription);
+  setText("#template-preview-footer", footer || footerBase);
+  setText("#template-preview-author", author || "Requested by Alex");
+  const authorEl = $("#template-preview-author");
+  const footerEl = $("#template-preview-footer");
+  const fieldsEl = $("#template-live-preview .discord-template-fields");
+  if (authorEl) authorEl.hidden = profile.showRequester === false;
+  if (footerEl) footerEl.hidden = !footer;
+  if (fieldsEl) fieldsEl.hidden = profile.showFields === false;
+}
+
 function bindConfigToInputs() {
   $$("[data-bind]").forEach((input) => {
     const path = input.dataset.bind;
@@ -889,6 +1064,7 @@ function bindConfigToInputs() {
       syncBoundControls(path, nextValue, input);
       if (path === "ai.replyStyle") state.config.ai.embedReplies = nextValue === "embed";
       if (path.startsWith("appearance.") || path.startsWith("presentation.")) renderEmbedPreview();
+      if (path.startsWith("messageTemplates.") || path.startsWith("appearance.") || path.startsWith("media.video")) renderTemplatePreview();
       if (path === "ai.providerOrder") renderProviders();
       setDirty(true);
     };
@@ -1513,11 +1689,16 @@ function init() {
   const mediaSearch = $("#media-search-filter");
   const commandSearch = $("#command-search-input");
   const commandCategory = $("#command-category-filter");
+  const templatePreviewSystem = $("#template-preview-system");
   if (mediaType) mediaType.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaChannel) mediaChannel.onchange = () => refreshMedia().catch((error) => toast(error.message));
   if (mediaSearch) mediaSearch.oninput = () => renderMedia(state.media);
   if (commandSearch) commandSearch.oninput = renderCommands;
   if (commandCategory) commandCategory.onchange = renderCommands;
+  if (templatePreviewSystem) templatePreviewSystem.onchange = () => {
+    updateSelectShell(templatePreviewSystem);
+    renderTemplatePreview();
+  };
 
   $$('[data-test-drive]').forEach((button) => {
     button.onclick = () => testDrive().catch((error) => toast(error.message));

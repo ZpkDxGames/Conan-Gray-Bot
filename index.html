@@ -57,6 +57,7 @@
 <button class="nav-item" data-page="ai-personality" title="Personality" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/personality.svg')"></span><span class="nav-label">Personality</span></button>
 <button class="nav-item" data-page="ai-messages" title="Replies and embeds" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span class="nav-label">Replies &amp; embeds</span></button>
 <button class="nav-item" data-page="ai-actions" title="Actions and feedback" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/action.svg')"></span><span class="nav-label">Actions &amp; feedback</span></button>
+<button class="nav-item" data-page="message-templates" title="Message templates" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span class="nav-label">Message templates</span></button>
 <button class="nav-item" data-page="ai-providers" title="AI providers" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/providers.svg')"></span><span class="nav-label">Providers</span></button>
 </div>
 </div>
@@ -399,6 +400,46 @@
 <div class="metric"><span>Outcome safety</span><strong>Locked</strong><small>Exact results remain in embed fields</small></div>
 </div>
 </article>
+</section>
+
+<section class="page" data-page-panel="message-templates">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Message template studio</h3>
+<p class="muted">Give AI chat, commands, games, media, triggers, admin actions, and status feedback their own titles, body wrappers, colors, thumbnails, author lines, and footer styles.</p>
+</div>
+</div>
+<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/info.svg')"></span><div><strong>Templates preserve exact results.</strong><span>Game outcomes and command facts are still calculated by backend logic. Templates only control presentation around those facts.</span></div></div>
+<article class="card template-guide-card">
+<div class="card-head"><div><p class="eyebrow">Available variables</p><h3>Reusable placeholders</h3></div></div>
+<p class="hint placeholder-guide"><code>{title}</code> <code>{description}</code> <code>{response}</code> <code>{footer}</code> <code>{actor}</code> <code>{user}</code> <code>{provider}</code> <code>{source}</code> <code>{kind}</code> <code>{system}</code> <code>{filename}</code> <code>{mediaType}</code> <code>{size}</code> <code>{channel}</code> <code>{guild}</code></p>
+</article>
+<article class="card template-live-preview-card">
+<div class="card-head"><div><p class="eyebrow">Live sample</p><h3>Template preview</h3></div>
+<label class="compact-select-label">System<select id="template-preview-system">
+<option value="global">Global defaults</option>
+<option value="ai">AI conversation</option>
+<option value="command">Commands</option>
+<option value="game">Games</option>
+<option value="media">Media</option>
+<option value="trigger">Triggers</option>
+<option value="admin">Administration</option>
+<option value="success">Success</option>
+<option value="warning">Warnings</option>
+<option value="error">Errors</option>
+<option value="info">Information</option>
+</select></label></div>
+<div class="discord-template-preview" id="template-live-preview">
+<div class="discord-template-author" id="template-preview-author">Requested by Alex</div>
+<strong id="template-preview-title">Command result</strong>
+<p id="template-preview-description">A sample response appears here with exact facts preserved.</p>
+<div class="discord-template-fields"><span><b>Result</b>Deterministic</span><span><b>Source</b>Conan control room</span></div>
+<small id="template-preview-footer">Conan Gray Bot • soft-pop control room</small>
+</div>
+</article>
+<div class="template-profile-list" id="template-profile-list"></div>
 </section>
 <section class="page" data-page-panel="ai-providers">
 <div class="page-intro">
