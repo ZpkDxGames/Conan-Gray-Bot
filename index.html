@@ -56,6 +56,7 @@
 <button class="nav-item" data-page="ai-memory" title="Branch memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span class="nav-label">Branch memory</span></button>
 <button class="nav-item" data-page="ai-personality" title="Personality" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/personality.svg')"></span><span class="nav-label">Personality</span></button>
 <button class="nav-item" data-page="ai-messages" title="Replies and embeds" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span class="nav-label">Replies &amp; embeds</span></button>
+<button class="nav-item" data-page="ai-actions" title="Actions and feedback" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/action.svg')"></span><span class="nav-label">Actions &amp; feedback</span></button>
 <button class="nav-item" data-page="ai-providers" title="AI providers" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/providers.svg')"></span><span class="nav-label">Providers</span></button>
 </div>
 </div>
@@ -327,7 +328,9 @@
 <label class="inline-toggle">Mention the author<span class="switch"><input data-bind="ai.mentionAuthor" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Provider in footer<span class="switch"><input data-bind="ai.includeProviderFooter" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Force embeds for every bot message<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
 </div>
+<p class="hint">When global embeds are enabled, the plain-message option is kept only as an emergency compatibility fallback.</p>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Message builder</p><h3>Template</h3></div></div>
@@ -341,6 +344,55 @@
 <label>Embed footer<input data-bind="appearance.embedFooter"/></label>
 <label>Embed thumbnail URL<input data-bind="appearance.embedThumbnailUrl" placeholder="https://..."/></label>
 <label>Accent color<input data-bind="appearance.accentColor" placeholder="#67e8f9"/></label>
+</div>
+</article>
+</section>
+<section class="page" data-page-panel="ai-actions">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/action.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">AI Studio</p>
+<h3>Actions, games, and realistic feedback</h3>
+<p class="muted">Give commands and deterministic games a polished embed presentation, then let AI narrate the result without changing the actual outcome.</p>
+</div>
+</div>
+<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><div><strong>Results stay deterministic.</strong><span>The AI only writes the reaction around exact function and game facts. If every provider fails, the bot selects from an isolated fallback pool of up to 50 unique responses per feature.</span></div></div>
+<div class="settings-columns">
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Unified presentation</p><h3>Embed every response</h3></div></div>
+<div class="form-grid">
+<label class="inline-toggle">Use embeds everywhere<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Semantic status colors<span class="switch"><input data-bind="presentation.semanticColors" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Show timestamps<span class="switch"><input data-bind="presentation.showTimestamp" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Show requester identity<span class="switch"><input data-bind="presentation.showRequester" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Detailed result fields<span class="switch"><input data-bind="presentation.richDetailFields" type="checkbox"/><span></span></span></label>
+</div>
+<p class="hint">This presentation layer applies to AI chat, slash commands, games, admin feedback, media notices, disabled states, and errors.</p>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Interpretation layer</p><h3>AI-generated reactions</h3></div></div>
+<div class="form-grid">
+<label class="inline-toggle">Enable AI interpretation<span class="switch"><input data-bind="presentation.aiActionInterpretation" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Interpret functions and commands<span class="switch"><input data-bind="presentation.interpretFunctions" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Interpret games<span class="switch"><input data-bind="presentation.interpretGames" type="checkbox"/><span></span></span></label>
+<label>Fallbacks per feature<input data-bind="presentation.fallbackPoolSize" max="50" min="1" type="number"/></label>
+<label>Narration token limit<input data-bind="presentation.narrationMaxTokens" max="300" min="40" type="number"/></label>
+<label>AI timeout before fallback<input data-bind="presentation.narrationTimeoutSeconds" max="20" min="2" type="number"/></label>
+<label>Narration temperature<input data-bind="presentation.narrationTemperature" max="1.5" min="0" step="0.1" type="number"/></label>
+</div>
+</article>
+</div>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Voice guardrails</p><h3>Function and game narrator prompt</h3></div></div>
+<label>Action narration prompt<textarea data-bind="presentation.actionNarrationPrompt" rows="7"></textarea></label>
+<p class="hint">Keep the prompt focused on public-facing style traits. The backend always instructs the narrator not to impersonate Conan, invent private facts, or contradict exact results.</p>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Fallback architecture</p><h3>What happens when AI fails</h3></div></div>
+<div class="metric-grid compact-metrics">
+<div class="metric"><span>Per command/game</span><strong>Up to 50</strong><small>Unique fallback combinations</small></div>
+<div class="metric"><span>Memory access</span><strong>None</strong><small>Action narration is isolated</small></div>
+<div class="metric"><span>Outcome safety</span><strong>Locked</strong><small>Exact results remain in embed fields</small></div>
 </div>
 </article>
 </section>
@@ -517,6 +569,15 @@
                   <input data-bind="games.maxActiveGamesPerChannel" max="10" min="1" type="number"/>
 </label>
 </div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Shared game presentation</p><h3>AI narration and safe fallbacks</h3></div><button class="ghost" data-page-link="ai-actions" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/action.svg')"></span><span>Full controls</span></button></div>
+<div class="form-grid">
+<label class="inline-toggle">Interpret game outcomes with AI<span class="switch"><input data-bind="presentation.interpretGames" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Embed every game response<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
+<label>Fallbacks per game<input data-bind="presentation.fallbackPoolSize" max="50" min="1" type="number"/></label>
+</div>
+<p class="hint">The game engine decides wins, losses, draws, random picks, and board state first. AI only narrates those fixed facts.</p>
 </article>
 <div class="game-grid">
 <button class="game-card" data-page-link="game-tictactoe" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span>
@@ -838,6 +899,9 @@
 <label>Embed footer<input data-bind="appearance.embedFooter"/></label>
 <label>Embed thumbnail URL<input data-bind="appearance.embedThumbnailUrl" placeholder="https://..."/></label>
 <label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Use embeds for all feedback<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Semantic success/error colors<span class="switch"><input data-bind="presentation.semanticColors" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Show requester in embeds<span class="switch"><input data-bind="presentation.showRequester" type="checkbox"/><span></span></span></label>
 </div>
 <div aria-label="Accent color presets" class="accent-presets">
 <button aria-label="Cyan accent" data-accent-preset="#67e8f9" style="--preset:#67e8f9" type="button"></button>

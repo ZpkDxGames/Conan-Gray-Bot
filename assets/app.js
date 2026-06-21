@@ -41,6 +41,7 @@ const PAGE_META = {
   "ai-memory": { section: "AI Studio", title: "Branch memory", description: "Mention-created branches, reply continuity, and reset rules." },
   "ai-personality": { section: "AI Studio", title: "Personality", description: "Tone, response length, formatting, and custom instructions." },
   "ai-messages": { section: "AI Studio", title: "Replies & embeds", description: "Message templates, delivery limits, mentions, and embed styling." },
+  "ai-actions": { section: "AI Studio", title: "Actions & feedback", description: "Unified embeds, AI game narration, deterministic results, and per-feature fallbacks." },
   "ai-providers": { section: "AI Studio", title: "Providers", description: "Fallback priority and provider availability." },
   "media-library": { section: "Media", title: "Library", description: "Browse and manage archived Discord photos and videos." },
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
@@ -785,7 +786,7 @@ function bindConfigToInputs() {
       setPath(state.config, path, nextValue);
       syncBoundControls(path, nextValue, input);
       if (path === "ai.replyStyle") state.config.ai.embedReplies = nextValue === "embed";
-      if (path.startsWith("appearance.")) renderEmbedPreview();
+      if (path.startsWith("appearance.") || path.startsWith("presentation.")) renderEmbedPreview();
       if (path === "ai.providerOrder") renderProviders();
       setDirty(true);
     };
