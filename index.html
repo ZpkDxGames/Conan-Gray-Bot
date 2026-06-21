@@ -216,9 +216,9 @@
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Quick setup</p><h3>Discord targets</h3></div></div>
 <div class="form-grid">
-<label>AI channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
+<label>Talkin' channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
 <label>Media channel<select data-bind="media.channelId" data-channel-select="text"></select></label>
-<label>Games/media category<select data-bind="games.allowedCategoryId" data-category-select=""></select></label>
+<label>Conan authorized category<select data-bind="games.allowedCategoryId" data-category-select=""></select></label>
 <label>Bot admin role ID<input data-bind="admin.roleId" placeholder="1514041404836282460"/></label>
 <label class="form-span-two">Google Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
 </div>
@@ -226,7 +226,7 @@
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Configuration paths</p><h3>Continue with detailed settings</h3></div></div>
 <div class="shortcut-grid compact-shortcuts">
-<button class="shortcut-card" data-page-link="ai-behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span><strong>AI channel behavior</strong><small>Reply modes and response controls.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
+<button class="shortcut-card" data-page-link="ai-behavior" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/ai.svg')"></span><span><strong>AI channel behavior</strong><small>Talkin' group chat and authorized @mentions.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="media-intake" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/cloud-upload.svg')"></span><span><strong>Media intake</strong><small>Attachment rules and notification templates.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="media-drive" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/folder.svg')"></span><span><strong>Google Drive</strong><small>Folder access and connection testing.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
 <button class="shortcut-card" data-page-link="admin-permissions" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span><strong>Admin access</strong><small>Role gating and command messages.</small></span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-right.svg')"></span></button>
@@ -239,19 +239,22 @@
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
 <h3>Behavior and response engine</h3>
-<p class="muted">Control where the bot responds, how it is triggered, and how much it generates.</p>
+<p class="muted">The Talkin' channel works like a group chat; other authorized channels keep direct @mention activation.</p>
 </div>
 <div class="page-intro-actions"><label class="switch labeled-switch"><span class="switch-label">AI enabled</span><input data-bind="ai.enabled" type="checkbox"/><span></span></label></div>
 </div>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Channel behavior</p><h3>Response routing</h3></div></div>
 <div class="form-grid">
-<label>AI channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
-<label>Reply mode<select data-bind="ai.replyMode"><option value="mention_or_reply">Mention or reply</option><option value="mention_only">Mention only</option><option value="reply_only">Reply only</option><option value="all_messages">All channel messages</option></select></label>
+<label>Talkin' channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
+<label>Authorized @mention category<select data-bind="games.allowedCategoryId" data-category-select=""></select></label>
 <label>Channel cooldown (seconds)<input data-bind="ai.channelCooldownSeconds" max="3600" min="0" type="number"/></label>
-<label>Empty mention prompt<input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural."/></label>
+<label>Empty @mention prompt<input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural."/></label>
+<label class="inline-toggle">Talkin' group-chat memory<span class="switch"><input data-bind="ai.talkinGroupMode" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Plain direct replies in Talkin'<span class="switch"><input data-bind="ai.talkinPlainReplies" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Show typing indicator<span class="switch"><input data-bind="ai.typingIndicator" type="checkbox"/><span></span></span></label>
 </div>
+<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Inside Talkin', every normal message can receive a direct reply without pinging the author. In other channels, Conan only answers when directly @mentioned inside the authorized category.</span></div>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Generation</p><h3>Output controls</h3></div></div>
@@ -268,7 +271,7 @@
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
 <h3>Branch memory</h3>
-<p class="muted">A direct mention starts a clean topic branch, then every participant shares its reply history.</p>
+<p class="muted">Talkin' keeps one shared group conversation. Mentions in other authorized channels use their own topic branches.</p>
 </div>
 <div class="page-intro-actions"><button class="ghost" data-page-link="admin-memory" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/trash.svg')"></span><span>Memory tools</span></button></div>
 </div>
@@ -280,7 +283,7 @@
 <label class="inline-toggle">@mention starts a fresh topic branch<span class="switch"><input data-bind="ai.mentionStartsNewBranch" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Replies continue the shared branch<span class="switch"><input data-bind="ai.replyContinuesBranch" type="checkbox"/><span></span></span></label>
 </div>
-<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span>Branch memory is channel-shared, not user-owned. Any participant can reply to a recent user or bot message and continue the same context, while speaker names remain distinct.</span></div>
+<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/memory.svg')"></span><span>The Talkin' channel stores one shared conversation across all users, while preserving who said each message. Outside Talkin', each direct @mention can start a separate topic branch.</span></div>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Reset behavior</p><h3>Memory reset keyword</h3></div></div>
@@ -334,7 +337,7 @@
 <label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Force embeds for every bot message<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
 </div>
-<p class="hint">When global embeds are enabled, the plain-message option is kept only as an emergency compatibility fallback.</p>
+<p class="hint">Talkin' overrides these presentation settings with normal plain replies so the channel feels like a group chat. Authorized @mention replies outside Talkin' still use the configured style.</p>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Message builder</p><h3>Template</h3></div></div>
@@ -509,7 +512,7 @@
 <div class="card-head"><div><p class="eyebrow">Fallback order</p><h3>AI providers</h3></div><button class="ghost" id="reset-provider-order-btn" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/refresh.svg')"></span><span>Reset order</span></button></div>
 <div class="provider-list provider-priority-list" id="provider-list"></div>
 <label>Provider order<input data-array="" data-bind="ai.providerOrder" placeholder="gemini, openrouter, groq"/></label>
-<p class="hint">The bot tries providers from top to bottom. Unconfigured providers are skipped automatically.</p>
+<p class="hint">The bot tries providers from top to bottom. OpenRouter uses explicit safe model candidates, rejects Qwen and NVIDIA model IDs, and ignores NVIDIA-hosted endpoints instead of using the random free router.</p>
 </article>
 </section>
 <section class="page" data-page-panel="media-library">
@@ -562,12 +565,12 @@
 <div class="notice warning-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/shield.svg')"></span><span>Public links allow anyone with the URL to view the file. Keep this disabled for private archives.</span></div>
 </article>
 <article class="card">
-<div class="card-head"><div><p class="eyebrow">Random media command</p><h3>/media delivery limits</h3></div><button class="ghost" data-page-link="commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span>Command setup</span></button></div>
+<div class="card-head"><div><p class="eyebrow">Random media command</p><h3>/media delivery</h3></div><button class="ghost" data-page-link="commands" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span>Command setup</span></button></div>
 <div class="form-grid">
-<label>Maximum Discord attachment (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
+<label>Direct attachment ceiling (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
 <label>Maximum Drive files scanned<input data-bind="media.randomCommandListLimit" min="1" max="5000" type="number"/></label>
 </div>
-<p class="hint">The command obeys Discord's server upload limit even when this value is higher.</p>
+<p class="hint">Files that fit are attached normally. Larger images and MP4 videos are shown through the bot's secure Drive stream instead of being reduced to a link.</p>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Discord feedback</p><h3>Upload notifications</h3></div></div>
@@ -677,11 +680,11 @@
 <p class="muted"><code>/media</code> selects any supported file. <code>/media type:image</code> or <code>/media type:video</code> filters the Drive folder. It only works inside the configured media channel.</p>
 <div class="form-grid">
 <label>Media channel<select data-bind="media.channelId" data-channel-select="text"></select></label>
-<label>Maximum Discord attachment (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
+<label>Direct attachment ceiling (MB)<input data-bind="media.randomCommandMaxFileSizeMb" min="1" max="500" type="number"/></label>
 <label>Maximum Drive files scanned per request<input data-bind="media.randomCommandListLimit" min="1" max="5000" type="number"/></label>
 <label>Drive folder ID or URL<input data-bind="media.googleDriveFolderId" placeholder="https://drive.google.com/drive/folders/..."/></label>
 </div>
-<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span>Supported images: <code>.png</code>, <code>.webp</code>, <code>.jpg</code>, <code>.jpeg</code>. Supported videos: <code>.mp4</code>. Private files are downloaded by the bot and attached directly to Discord when they fit the upload limit.</span></div>
+<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/media.svg')"></span><span>Supported images: <code>.png</code>, <code>.webp</code>, <code>.jpg</code>, <code>.jpeg</code>. Supported videos: <code>.mp4</code>. Private files are attached directly when they fit the limit. Larger files are securely streamed through the bot backend so Discord can still show the image or native video player.</span></div>
 </article>
 </section>
 <section class="page" data-page-panel="games">
@@ -913,7 +916,7 @@
 <label class="inline-toggle"><span>Allow anyone to answer</span><span class="switch"><input data-bind="games.guessSongAllowAnyone" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle"><span>Reveal answer after final attempt</span><span class="switch"><input data-bind="games.guessSongRevealOnFailure" type="checkbox"/><span></span></span></label>
 </div>
-<label class="guess-rounds-field">Song rounds<textarea data-bind="games.guessSongRounds" data-lines="" placeholder="Heather | sweater song | A bittersweet song about wishing you were the person somebody chose." rows="12"></textarea></label>
+<label class="guess-rounds-field">Song rounds<textarea data-bind="games.guessSongRounds" data-lines="" placeholder="Maniac | | psychopathic don't be so dramatic" rows="12"></textarea></label>
 <p class="hint"><strong>One round per line:</strong> <code>Answer | alias 1, alias 2 | Hint</code>. Users answer by replying directly to the bot's clue. Exact titles, aliases, minor typos, and AI-confirmed equivalents are accepted. The same generic reply-judge framework can support future guessing games.</p>
 </article>
 </section><section class="page" data-page-panel="game-wyr">
