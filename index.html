@@ -8,7 +8,7 @@
 <link href="./assets/logo.webp" rel="icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="shortcut icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="apple-touch-icon"/>
-<link href="/assets/styles.css?v=20260622.1" rel="stylesheet"/>
+<link href="/assets/styles.css?v=20260622.2" rel="stylesheet"/>
 </head>
 <body>
 <div class="aurora aurora-one"></div>
@@ -239,7 +239,7 @@
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
 <h3>Behavior and response engine</h3>
-<p class="muted">The Talkin' channel works like a group chat; other authorized channels keep direct @mention activation.</p>
+<p class="muted">Talkin' now behaves like a real group chat: Conan joins when directly called, keeps reply targets straight, and can occasionally speak first.</p>
 </div>
 <div class="page-intro-actions"><label class="switch labeled-switch"><span class="switch-label">AI enabled</span><input data-bind="ai.enabled" type="checkbox"/><span></span></label></div>
 </div>
@@ -248,13 +248,35 @@
 <div class="form-grid">
 <label>Talkin' channel<select data-bind="ai.channelId" data-channel-select="text"></select></label>
 <label>Authorized @mention category<select data-bind="games.allowedCategoryId" data-category-select=""></select></label>
+<label>Talkin' activation<select data-bind="ai.talkinActivationMode"><option value="direct_calls">Direct calls only</option><option value="direct_calls_and_questions">Direct calls + unthreaded questions</option><option value="all_messages">Every message (legacy)</option></select></label>
+<label>Wake words<input data-array="" data-bind="ai.talkinWakeWords" placeholder="conan, conan gray"/></label>
 <label>Channel cooldown (seconds)<input data-bind="ai.channelCooldownSeconds" max="3600" min="0" type="number"/></label>
-<label>Empty @mention prompt<input data-bind="ai.emptyMessagePrompt" placeholder="Say something helpful and natural."/></label>
+<label>Name-only / empty mention prompt<input data-bind="ai.emptyMessagePrompt" placeholder="Reply with a tiny acknowledgement."/></label>
+<label class="inline-toggle">Reply when his name is called<span class="switch"><input data-bind="ai.talkinRespondToNameCalls" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Reply to messages threaded to Conan<span class="switch"><input data-bind="ai.talkinRespondToBotReplies" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Ignore replies aimed at other users<span class="switch"><input data-bind="ai.talkinIgnoreRepliesToOthers" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Talkin' group-chat memory<span class="switch"><input data-bind="ai.talkinGroupMode" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Plain direct replies in Talkin'<span class="switch"><input data-bind="ai.talkinPlainReplies" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Show typing indicator<span class="switch"><input data-bind="ai.typingIndicator" type="checkbox"/><span></span></span></label>
 </div>
-<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Inside Talkin', every normal message can receive a direct reply without pinging the author. In other channels, Conan only answers when directly @mentioned inside the authorized category.</span></div>
+<div class="notice info-notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>By default, Conan answers a direct @mention, a configured wake word such as “conan,” or a Discord reply to one of his own messages. A reply between two users is ignored unless Conan is explicitly called into it. Other authorized channels remain @mention-only.</span></div>
+<div class="routing-example-grid" aria-label="Talkin routing examples">
+<div class="routing-example"><span class="routing-state responds">Replies</span><strong>gina: conan are you alive</strong><small>Name call targets Conan directly.</small></div>
+<div class="routing-example"><span class="routing-state ignores">Stays quiet</span><strong>toni replies to gina: literally same</strong><small>The thread belongs to two users, not Conan.</small></div>
+<div class="routing-example"><span class="routing-state responds">Replies</span><strong>gina replies to Conan: no that is not what i meant</strong><small>A reply to Conan continues naturally.</small></div>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Natural initiative</p><h3>Spontaneous conversation starts</h3></div></div>
+<div class="form-grid">
+<label class="inline-toggle">Allow Conan to speak first<span class="switch"><input data-bind="ai.spontaneousConversationEnabled" type="checkbox"/><span></span></span></label>
+<label>Minimum quiet time (minutes)<input data-bind="ai.spontaneousIdleMinutes" max="10080" min="5" type="number"/></label>
+<label>Minimum time between starts (minutes)<input data-bind="ai.spontaneousCooldownMinutes" max="43200" min="15" type="number"/></label>
+<label>Check interval (minutes)<input data-bind="ai.spontaneousCheckMinutes" max="1440" min="1" type="number"/></label>
+<label>Chance per eligible check (%)<input data-bind="ai.spontaneousChancePercent" max="100" min="0" step="1" type="number"/></label>
+<label class="form-span-two">Starter guidance<textarea data-bind="ai.spontaneousPrompt" rows="5" placeholder="Start one short, natural group-chat message..."></textarea></label>
+</div>
+<div class="setting-note">A spontaneous start is sent as a normal standalone message, never as a fake reply. Quiet-time, probability, and cooldown checks prevent it from interrupting active conversations or becoming repetitive.</div>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Generation</p><h3>Output controls</h3></div></div>
@@ -427,11 +449,11 @@
 <label>Maximum characters per message<input data-bind="ai.maxDiscordMessageLength" max="4000" min="200" type="number"/></label>
 <label class="inline-toggle">Split long replies<span class="switch"><input data-bind="ai.splitLongReplies" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Mention the author<span class="switch"><input data-bind="ai.mentionAuthor" type="checkbox"/><span></span></span></label>
-<label class="inline-toggle">Provider in footer<span class="switch"><input data-bind="ai.includeProviderFooter" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle">Allow provider metadata in footers<span class="switch"><input data-bind="ai.includeProviderFooter" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Embed timestamp<span class="switch"><input data-bind="appearance.embedShowTimestamp" type="checkbox"/><span></span></span></label>
 <label class="inline-toggle">Force embeds for every bot message<span class="switch"><input data-bind="presentation.embedEverywhere" type="checkbox"/><span></span></span></label>
 </div>
-<p class="hint">Talkin' overrides these presentation settings with normal plain replies so the channel feels like a group chat. Authorized @mention replies outside Talkin' still use the configured style.</p>
+<p class="hint">Talkin' overrides these presentation settings with normal plain replies so the channel feels like a group chat. Authorized @mention replies outside Talkin' still use the configured style. Each message profile can independently hide provider and source metadata.</p>
 </article>
 <article class="card">
 <div class="card-head"><div><p class="eyebrow">Message builder</p><h3>Template</h3></div></div>
@@ -522,7 +544,13 @@
 <option value="global">Global defaults</option>
 <option value="ai">AI conversation</option>
 <option value="command">Commands and functions</option>
-<option value="game">Games</option>
+<option value="game">Games · shared defaults</option>
+<option value="game_tictactoe">Game · Tic-tac-toe</option>
+<option value="game_coinflip">Game · Coinflip</option>
+<option value="game_eightball">Game · 8-ball</option>
+<option value="game_rps">Game · Rock Paper Scissors</option>
+<option value="game_guesssong">Game · Guess the Song</option>
+<option value="game_wouldyourather">Game · Would You Rather</option>
 <option value="media">Media</option>
 <option value="trigger">Media triggers</option>
 <option value="admin">Administration</option>
@@ -589,6 +617,7 @@
 <button type="button" data-template-token="{channel}"><code>{channel}</code></button>
 <button type="button" data-template-token="{guild}"><code>{guild}</code></button>
 </div>
+<p class="hint"><code>{footer}</code> contains the base footer plus only the provider/source metadata enabled for that profile. Clear the footer field—or use <strong>Remove footer completely</strong>—to send no footer at all.</p>
 </article>
 </aside>
 </div>
@@ -882,6 +911,10 @@
 </label>
 </div>
 </article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>Tic-tac-toe message style</h3></div><button class="ghost" data-template-profile-link="game_tictactoe" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">Customize its title, narration wrapper, requester line, fields, timestamp, color, thumbnail, footer, and whether provider/source metadata appears.</p>
+</article>
 </section><section class="page" data-page-panel="game-coinflip">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
@@ -918,6 +951,10 @@
 </label>
 </div>
 </article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>Coinflip message style</h3></div><button class="ghost" data-template-profile-link="game_coinflip" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">Give coinflip its own embed layout, footer, metadata visibility, color, artwork, and plain-message mode.</p>
+</article>
 </section><section class="page" data-page-panel="game-eightball">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
@@ -943,6 +980,10 @@
                 Answer pool
                 <textarea data-bind="games.eightballAnswers" data-lines="" placeholder="One answer per line" rows="8"></textarea>
 </label>
+</article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>8-ball message style</h3></div><button class="ghost" data-template-profile-link="game_eightball" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">Control how the question and selected answer appear without changing the deterministic answer pool.</p>
 </article>
 </section><section class="page" data-page-panel="game-rps">
 <div class="page-intro">
@@ -980,6 +1021,10 @@
 </label>
 </div>
 </article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>Rock Paper Scissors message style</h3></div><button class="ghost" data-template-profile-link="game_rps" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">Style the move comparison and result independently from every other game.</p>
+</article>
 </section><section class="page" data-page-panel="game-guesssong">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
@@ -1013,6 +1058,10 @@
 <label class="guess-rounds-field">Song rounds<textarea data-bind="games.guessSongRounds" data-lines="" placeholder="Maniac | | psychopathic don't be so dramatic" rows="12"></textarea></label>
 <p class="hint"><strong>One round per line:</strong> <code>Answer | alias 1, alias 2 | Hint</code>. Users answer by replying directly to the bot's clue. Exact titles, aliases, minor typos, and AI-confirmed equivalents are accepted. The same generic reply-judge framework can support future guessing games.</p>
 </article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>Guess the Song message style</h3></div><button class="ghost" data-template-profile-link="game_guesssong" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">The same profile is used for the opening clue, wrong guesses, correct answers, and the final reveal. Provider and judge-source notes can be hidden.</p>
+</article>
 </section><section class="page" data-page-panel="game-wyr">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/game.svg')"></span></div>
@@ -1038,6 +1087,10 @@
                 Question pool
                 <textarea data-bind="games.wouldYouRatherQuestions" data-lines="" placeholder="One question per line" rows="8"></textarea>
 </label>
+</article>
+<article class="card game-message-template-card">
+<div class="card-head"><div><p class="eyebrow">Discord presentation</p><h3>Would You Rather message style</h3></div><button class="ghost" data-template-profile-link="game_wouldyourather" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/message.svg')"></span><span>Open message editor</span></button></div>
+<p class="muted">Customize the question card, footer, fields, requester, timestamp, and embed appearance.</p>
 </article>
 </section>
 <section class="page" data-page-panel="admin-permissions">
@@ -1203,6 +1256,6 @@
 </section>
 </main>
 <script src="/assets/config.js?v=20260621.1"></script>
-<script src="/assets/app.js?v=20260622.1"></script>
+<script src="/assets/app.js?v=20260622.2"></script>
 </body>
 </html>

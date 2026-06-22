@@ -48,7 +48,7 @@ const PAGE_ALIASES = {
 const PAGE_META = {
   overview: { section: "Workspace", title: "Overview", description: "Status, shortcuts, and the most important controls." },
   "setup-ids": { section: "Workspace", title: "Quick setup", description: "Important Discord IDs and shared connection targets." },
-  "ai-behavior": { section: "AI Studio", title: "Behavior", description: "Response routing, triggers, generation limits, and cooldowns." },
+  "ai-behavior": { section: "AI Studio", title: "Behavior", description: "Direct-call routing, reply-target awareness, spontaneous starts, generation limits, and cooldowns." },
   "ai-memory": { section: "AI Studio", title: "Branch memory", description: "Mention-created branches, reply continuity, and reset rules." },
   "ai-personality": { section: "AI Studio", title: "Personality lab", description: "Naturalness, humor, emotional tone, pacing, callbacks, examples, and live previews." },
   "ai-messages": { section: "AI Studio", title: "Replies & embeds", description: "Message templates, delivery limits, mentions, and embed styling." },
@@ -79,7 +79,13 @@ const TEMPLATE_PROFILES = [
   { key: "global", name: "Global defaults", description: "The baseline used by every system before its own profile is applied." },
   { key: "ai", name: "AI conversation", description: "Branch-aware mention and reply responses." },
   { key: "command", name: "Commands and functions", description: "Utility, music, help, and deterministic command results." },
-  { key: "game", name: "Games", description: "Tic-tac-toe, coinflip, 8-ball, RPS, Guess the Song, and Would You Rather." },
+  { key: "game", name: "Games · shared defaults", description: "The parent style inherited by every individual game." },
+  { key: "game_tictactoe", name: "Game · Tic-tac-toe", description: "Opening, board updates, and final tic-tac-toe results." },
+  { key: "game_coinflip", name: "Game · Coinflip", description: "Coin result, narration, fields, requester line, and footer." },
+  { key: "game_eightball", name: "Game · 8-ball", description: "Question and answer presentation for the magic 8-ball." },
+  { key: "game_rps", name: "Game · Rock Paper Scissors", description: "Move comparison and win, loss, or draw presentation." },
+  { key: "game_guesssong", name: "Game · Guess the Song", description: "Mystery clues, attempts, correct answers, and round endings." },
+  { key: "game_wouldyourather", name: "Game · Would You Rather", description: "Question selection and choice-card presentation." },
   { key: "media", name: "Media", description: "Random archive pulls, uploads, and Drive-backed media feedback." },
   { key: "trigger", name: "Media triggers", description: "Keyword-triggered images, links, and configured responses." },
   { key: "admin", name: "Administration", description: "Role-gated lifecycle, presence, AI, and memory actions." },
@@ -88,6 +94,15 @@ const TEMPLATE_PROFILES = [
   { key: "error", name: "Errors", description: "Provider, permission, Drive, and unexpected failures." },
   { key: "info", name: "General information", description: "Neutral notices that do not map to another system." },
 ];
+
+const TEMPLATE_PARENT_KEYS = {
+  game_tictactoe: "game",
+  game_coinflip: "game",
+  game_eightball: "game",
+  game_rps: "game",
+  game_guesssong: "game",
+  game_wouldyourather: "game",
+};
 
 
 const AI_PERSONA_PRESETS = {
@@ -1074,13 +1089,18 @@ function ensureTemplateProfiles() {
     showRequester: true,
     showTimestamp: true,
     showFields: true,
+    showProvider: true,
+    showSourceNote: true,
   };
   const global = { ...baseline, ...(state.config.messageTemplates.global || {}) };
   state.config.messageTemplates.global = global;
   TEMPLATE_PROFILES.slice(1).forEach(({ key }) => {
     const existing = state.config.messageTemplates[key] || {};
+    const parentKey = TEMPLATE_PARENT_KEYS[key] || "global";
+    const parent = state.config.messageTemplates[parentKey] || global;
     state.config.messageTemplates[key] = {
       ...global,
+      ...parent,
       ...existing,
       inheritGlobal: existing.inheritGlobal ?? true,
     };
@@ -1105,6 +1125,9 @@ function templateProfileEditor(profile) {
   const isGlobal = profile.key === "global";
   const stored = state.config.messageTemplates?.[profile.key] || {};
   const inherited = !isGlobal && stored.inheritGlobal === true;
+  const parentKey = TEMPLATE_PARENT_KEYS[profile.key] || "global";
+  const parentProfile = TEMPLATE_PROFILES.find(({ key }) => key === parentKey);
+  const parentName = parentProfile?.name || "Global defaults";
   const disabled = inherited ? " disabled" : "";
   const mediaExtras = profile.key === "media" ? `
     <section class="template-editor-section">
@@ -1124,13 +1147,13 @@ function templateProfileEditor(profile) {
   return `
     ${isGlobal ? "" : `
       <div class="template-inheritance-control">
-        <div><strong>Use Global defaults</strong><span>Keep this scheme synchronized with the base profile.</span></div>
-        <label class="switch template-inheritance-switch" title="Use Global defaults">
-          <input data-bind="${path}.inheritGlobal" type="checkbox" aria-label="Use Global defaults">
+        <div><strong>Use ${escapeHtml(parentName)}</strong><span>Keep this scheme synchronized with its parent profile.</span></div>
+        <label class="switch template-inheritance-switch" title="Use ${escapeAttr(parentName)}">
+          <input data-bind="${path}.inheritGlobal" type="checkbox" aria-label="Use ${escapeAttr(parentName)}">
           <span aria-hidden="true"></span>
         </label>
       </div>
-      ${inherited ? `<div class="template-inherited-notice">This scheme is currently previewing Global defaults. Turn inheritance off to customize it independently.</div>` : ""}
+      ${inherited ? `<div class="template-inherited-notice">This scheme is currently previewing ${escapeHtml(parentName)}. Turn inheritance off to customize it independently.</div>` : ""}
     `}
     <section class="template-editor-section">
       <div class="template-editor-section-head"><div><span class="eyebrow">Presentation</span><h4>Layout and visibility</h4></div></div>
@@ -1149,6 +1172,15 @@ function templateProfileEditor(profile) {
         <label class="form-span-two">Description template<textarea data-template-text-field data-bind="${path}.descriptionTemplate" rows="5" placeholder="{description}"${disabled}></textarea></label>
         <label class="form-span-two">Footer template<textarea data-template-text-field data-bind="${path}.footerTemplate" rows="3" placeholder="{footer}"${disabled}></textarea></label>
       </div>
+      <div class="toggle-grid template-footer-toggle-grid">
+        <label class="inline-toggle"><span>Append AI provider</span><span class="switch"><input data-bind="${path}.showProvider" type="checkbox"${disabled}><span></span></span></label>
+        <label class="inline-toggle"><span>Append narration/source note</span><span class="switch"><input data-bind="${path}.showSourceNote" type="checkbox"${disabled}><span></span></span></label>
+      </div>
+      <div class="template-footer-actions">
+        <button class="ghost" data-template-remove-footer type="button"${disabled}>Remove footer completely</button>
+        <button class="ghost" data-template-reset-footer type="button"${disabled}>Use base footer</button>
+      </div>
+      <p class="hint">Provider and source details are optional. You can also insert <code>{provider}</code> or <code>{source}</code> manually wherever you want them.</p>
     </section>
     <section class="template-editor-section">
       <div class="template-editor-section-head"><div><span class="eyebrow">Appearance</span><h4>Color and artwork</h4></div></div>
@@ -1175,13 +1207,37 @@ function renderTemplateProfiles() {
   setText("#template-editor-description", profile.description);
   setText("#template-preview-profile-label", profile.name);
   const inherited = profile.key !== "global" && state.config.messageTemplates?.[profile.key]?.inheritGlobal === true;
+  const parentKey = TEMPLATE_PARENT_KEYS[profile.key] || "global";
+  const parentName = TEMPLATE_PROFILES.find(({ key }) => key === parentKey)?.name || "Global defaults";
   const status = $("#template-scheme-status");
   const statusText = $("#template-scheme-status-text");
   if (status) status.classList.toggle("is-inherited", inherited);
-  if (statusText) statusText.textContent = profile.key === "global" ? "Base profile" : inherited ? "Using Global defaults" : "Custom profile";
+  if (statusText) statusText.textContent = profile.key === "global" ? "Base profile" : inherited ? `Using ${parentName}` : "Custom profile";
   root.querySelectorAll("[data-template-text-field]").forEach((field) => {
     field.addEventListener("focus", () => { state.templateTokenTarget = field; });
   });
+  const removeFooter = root.querySelector("[data-template-remove-footer]");
+  if (removeFooter) removeFooter.onclick = () => {
+    const path = `messageTemplates.${profile.key}`;
+    setPath(state.config, `${path}.footerTemplate`, "");
+    setPath(state.config, `${path}.showProvider`, false);
+    setPath(state.config, `${path}.showSourceNote`, false);
+    renderTemplateProfiles();
+    bindConfigToInputs();
+    enhanceSelects();
+    renderTemplatePreview();
+    setDirty(true);
+  };
+  const resetFooter = root.querySelector("[data-template-reset-footer]");
+  if (resetFooter) resetFooter.onclick = () => {
+    const path = `messageTemplates.${profile.key}`;
+    setPath(state.config, `${path}.footerTemplate`, "{footer}");
+    renderTemplateProfiles();
+    bindConfigToInputs();
+    enhanceSelects();
+    renderTemplatePreview();
+    setDirty(true);
+  };
 }
 
 function insertTemplateToken(token) {
@@ -1191,7 +1247,7 @@ function insertTemplateToken(token) {
       || $("#template-profile-editor input[data-template-text-field]:not(:disabled)");
   }
   if (!target) {
-    toast("Turn off Global inheritance before editing this scheme.");
+    toast("Turn off inheritance before editing this scheme.");
     return;
   }
   const start = Number.isInteger(target.selectionStart) ? target.selectionStart : target.value.length;
@@ -1213,14 +1269,28 @@ function renderTemplatePreview() {
   ensureTemplateProfiles();
   const key = activeTemplateProfile().key;
   const globalProfile = state.config.messageTemplates?.global || {};
-  const selectedProfile = state.config.messageTemplates?.[key] || globalProfile;
-  const profile = key !== "global" && selectedProfile.inheritGlobal ? globalProfile : selectedProfile;
+  const resolveProfile = (profileKey, visited = new Set()) => {
+    if (visited.has(profileKey)) return globalProfile;
+    visited.add(profileKey);
+    if (profileKey === "global") return globalProfile;
+    const selected = state.config.messageTemplates?.[profileKey] || {};
+    const parentKey = TEMPLATE_PARENT_KEYS[profileKey] || "global";
+    const parent = resolveProfile(parentKey, visited);
+    return selected.inheritGlobal ? parent : { ...parent, ...selected };
+  };
+  const profile = resolveProfile(key);
   const appearance = state.config.appearance || {};
   const samples = {
     global: ["Conan Gray Bot", "A polished system response appears here."],
     ai: ["A note from the control room", "I heard the question. The emotional spreadsheet is open."],
     command: ["Command result", "The function completed without changing any locked facts."],
     game: ["Game room update", "The result is final. The narration is only here for dramatic lighting."],
+    game_tictactoe: ["Tic-tac-toe finale", "x won after a completely normal amount of emotional investment."],
+    game_coinflip: ["The coin has spoken", "heads. apparently the universe had one tiny opinion today."],
+    game_eightball: ["The emotionally suspicious 8-ball", "the vibes say yes. legally this is not binding."],
+    game_rps: ["Rock, paper, emotional consequences", "you win. i will be processing this privately."],
+    game_guesssong: ["Mystery track", "one lyric clue, five attempts, and absolutely no pressure."],
+    game_wouldyourather: ["Choose your tiny crisis", "pick one and defend it like the bridge depends on it."],
     media: ["Random archive pull", "A Drive-backed video or image is ready inside its media card."],
     trigger: ["A media cue just fired", "The configured keyword found its moment."],
     admin: ["Admin control room", "The requested control action has been applied."],
@@ -1230,16 +1300,22 @@ function renderTemplatePreview() {
     info: ["Conan Gray Bot", "Here is the information you asked for."],
   };
   const [baseTitle, baseDescription] = samples[key] || samples.global;
-  const footerBase = appearance.embedFooter || "Conan Gray Bot • soft-pop control room";
+  const footerBase = appearance.embedFooter == null ? "Conan Gray Bot • soft-pop control room" : String(appearance.embedFooter).trim();
+  const sourceSample = key.startsWith("game_") || key === "game" ? "AI narration: gemini" : "Conan control room";
+  const footerNotes = [];
+  const providerPresent = key === "ai";
+  if (providerPresent && profile.showProvider !== false && state.config.ai?.includeProviderFooter !== false) footerNotes.push("AI via gemini");
+  if (profile.showSourceNote !== false) footerNotes.push(sourceSample);
+  const generatedFooter = [footerBase, ...footerNotes].filter(Boolean).join(" • ");
   const values = {
     title: baseTitle,
     description: baseDescription,
     response: baseDescription,
-    footer: footerBase,
+    footer: generatedFooter,
     actor: "Alex",
     user: "Alex",
     provider: "gemini",
-    source: "Conan control room",
+    source: sourceSample,
     kind: key,
     system: key,
     filename: "2026-06-21-memory.mp4",
@@ -1250,13 +1326,14 @@ function renderTemplatePreview() {
   };
   const title = formatTemplateSample(profile.titleTemplate, values, baseTitle);
   const description = formatTemplateSample(profile.descriptionTemplate, values, baseDescription);
-  const footer = formatTemplateSample(profile.footerTemplate, values, footerBase);
+  const footer = formatTemplateSample(profile.footerTemplate, values, generatedFooter);
   const author = formatTemplateSample(profile.authorTemplate, values, "Requested by Alex");
   const semantic = {
     success: "#4ade80", warning: "#fbbf24", error: "#fb7185", admin: "#a78bfa",
     media: "#38bdf8", trigger: "#38bdf8", game: "#f472b6",
   };
-  const color = String(profile.color || semantic[key] || appearance.accentColor || "#67e8f9");
+  const semanticColor = key.startsWith("game_") ? semantic.game : semantic[key];
+  const color = String(profile.color || semanticColor || appearance.accentColor || "#67e8f9");
   const validColor = /^#[0-9a-f]{6}$/i.test(color) || /^#[0-9a-f]{3}$/i.test(color) ? color : "#67e8f9";
   const preview = $("#template-live-preview");
   const plain = $("#template-plain-preview");
@@ -1272,7 +1349,7 @@ function renderTemplatePreview() {
   if (swatch) swatch.style.backgroundColor = validColor;
   setText("#template-preview-title", title || baseTitle);
   setText("#template-preview-description", description || baseDescription);
-  setText("#template-preview-footer", footer || footerBase);
+  setText("#template-preview-footer", footer || generatedFooter || footerBase);
   setText("#template-preview-author", author || "Requested by Alex");
   const authorEl = $("#template-preview-author");
   const footerEl = $("#template-preview-footer");
@@ -2137,7 +2214,11 @@ function renderEmbedPreview() {
   const footer = $("#embed-preview-footer");
   if (preview) preview.style.borderLeftColor = safeAccent;
   if (title) title.textContent = appearance.embedTitle || "A natural reply";
-  if (footer) footer.textContent = appearance.embedFooter || "Conan Gray Bot";
+  if (footer) {
+    const footerText = appearance.embedFooter == null ? "Conan Gray Bot" : String(appearance.embedFooter).trim();
+    footer.textContent = footerText;
+    footer.hidden = !footerText;
+  }
 }
 
 function applyAccentPreset(value) {
@@ -2260,6 +2341,19 @@ function init() {
     enhanceSelects();
     renderTemplatePreview();
   };
+  $$('[data-template-profile-link]').forEach((button) => {
+    button.onclick = () => {
+      const requested = button.dataset.templateProfileLink || "game";
+      if (!TEMPLATE_PROFILES.some(({ key }) => key === requested)) return;
+      state.templateScheme = requested;
+      localStorage.setItem(STORAGE.templateScheme, requested);
+      showPage("message-templates");
+      renderTemplateProfiles();
+      bindConfigToInputs();
+      enhanceSelects();
+      renderTemplatePreview();
+    };
+  });
   $$('[data-template-token]').forEach((button) => {
     button.onclick = () => insertTemplateToken(button.dataset.templateToken || "");
   });
