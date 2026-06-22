@@ -8,7 +8,7 @@
 <link href="./assets/logo.webp" rel="icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="shortcut icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="apple-touch-icon"/>
-<link href="/assets/styles.css?v=20260621.3" rel="stylesheet"/>
+<link href="/assets/styles.css?v=20260622.1" rel="stylesheet"/>
 </head>
 <body>
 <div class="aurora aurora-one"></div>
@@ -298,24 +298,118 @@
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/personality.svg')"></span></div>
 <div class="page-intro-copy">
 <p class="eyebrow">AI Studio</p>
-<h3>Personality and writing style</h3>
-<p class="muted">Tune the bot’s natural voice, formatting habits, emotional tone, and response structure.</p>
+<h3>Personality lab</h3>
+<p class="muted">Blend a natural public-facing Conan-inspired voice without turning every reply into a catchphrase or performance.</p>
 </div>
+<div class="page-intro-actions"><span class="persona-preset-status" id="ai-persona-preset-label">Public Conan blend</span></div>
 </div>
-<article class="card">
-<div class="card-head"><div><p class="eyebrow">Natural conversation</p><h3>Tone controls</h3></div></div>
+<div class="notice info-notice persona-disclaimer"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/info.svg')"></span><span>This is a fictional bot persona inspired by public interviews and artistic tone. It should never claim to be the real person or invent private memories.</span></div>
+<div class="ai-persona-layout">
+<article class="card ai-persona-editor">
+<section class="persona-editor-section">
+<div class="card-head"><div><p class="eyebrow">Starting point</p><h3>Voice presets</h3></div></div>
+<div class="persona-preset-grid" role="group" aria-label="AI voice presets">
+<button class="persona-preset-button" data-ai-persona-preset="public_conan" type="button"><strong>Public Conan</strong><small>dry, candid, understated</small></button>
+<button class="persona-preset-button" data-ai-persona-preset="soft" type="button"><strong>Soft friend</strong><small>warmer, gentler, quieter</small></button>
+<button class="persona-preset-button" data-ai-persona-preset="dry" type="button"><strong>Dry humor</strong><small>low-key, witty, direct</small></button>
+<button class="persona-preset-button" data-ai-persona-preset="chaotic" type="button"><strong>Chaotic bestie</strong><small>playful, dramatic, still human</small></button>
+</div>
+<p class="hint">Choosing a preset changes the controls below. Editing any blend control marks the voice as custom.</p>
+</section>
+<section class="persona-editor-section">
+<div class="card-head"><div><p class="eyebrow">Conversation rhythm</p><h3>Naturalness and pacing</h3></div></div>
+<div class="persona-slider-grid">
+<label class="persona-slider"><span><strong>Naturalness</strong><output data-ai-range-output="ai.naturalnessLevel">92</output></span><small>Less polished, more like a real text conversation.</small><input data-ai-persona-blend data-bind="ai.naturalnessLevel" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Energy mirroring</strong><output data-ai-range-output="ai.mirroringLevel">88</output></span><small>Matches the speaker’s message length and energy.</small><input data-ai-persona-blend data-bind="ai.mirroringLevel" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Question tendency</strong><output data-ai-range-output="ai.questionFrequency">18</output></span><small>Lower values stop every reply ending like an interview.</small><input data-ai-persona-blend data-bind="ai.questionFrequency" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Conversation initiative</strong><output data-ai-range-output="ai.initiativeLevel">22</output></span><small>How often he introduces a related thought or new topic.</small><input data-ai-persona-blend data-bind="ai.initiativeLevel" max="100" min="0" type="range"/></label>
+</div>
+</section>
+<section class="persona-editor-section">
+<div class="card-head"><div><p class="eyebrow">Personality mix</p><h3>How the voice feels</h3></div></div>
+<div class="persona-slider-grid">
+<label class="persona-slider"><span><strong>Dry humor</strong><output data-ai-range-output="ai.humorLevel">62</output></span><small>Small observations instead of nonstop punchlines.</small><input data-ai-persona-blend data-bind="ai.humorLevel" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Sarcasm</strong><output data-ai-range-output="ai.sarcasmLevel">42</output></span><small>Aimed at situations, never someone’s real pain.</small><input data-ai-persona-blend data-bind="ai.sarcasmLevel" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Emotional openness</strong><output data-ai-range-output="ai.emotionalOpenness">68</output></span><small>Honest and specific without becoming a therapist.</small><input data-ai-persona-blend data-bind="ai.emotionalOpenness" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Dramatic flair</strong><output data-ai-range-output="ai.dramaticFlair">38</output></span><small>Occasional theatrical wording when the moment earns it.</small><input data-ai-persona-blend data-bind="ai.dramaticFlair" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Affectionate teasing</strong><output data-ai-range-output="ai.teasingLevel">34</output></span><small>Friendly roasting with an immediate soft-off switch.</small><input data-ai-persona-blend data-bind="ai.teasingLevel" max="100" min="0" type="range"/></label>
+<label class="persona-slider"><span><strong>Slang</strong><output data-ai-range-output="ai.slangLevel">28</output></span><small>Light internet language that never feels pasted on.</small><input data-ai-persona-blend data-bind="ai.slangLevel" max="100" min="0" type="range"/></label>
+</div>
+</section>
+<section class="persona-editor-section">
+<div class="card-head"><div><p class="eyebrow">Situational behavior</p><h3>Conversation instincts</h3></div></div>
 <div class="form-grid">
-<label>Tone style<select data-bind="ai.toneStyle"><option value="adaptive">Adaptive</option><option value="natural">Natural</option><option value="casual">Casual</option><option value="supportive">Supportive</option><option value="witty">Witty</option><option value="direct">Direct</option></select></label>
-<label>Response length<select data-bind="ai.responseLength"><option value="brief">Brief</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></label>
-<label>Emoji usage<select data-bind="ai.emojiStyle"><option value="none">None</option><option value="rare">Rare</option><option value="occasional">Occasional</option><option value="frequent">Frequent</option></select></label>
-<label>Markdown structure<select data-bind="ai.markdownStyle"><option value="none">None</option><option value="minimal">Minimal</option><option value="natural">Natural</option><option value="structured">Structured</option></select></label>
+<label>Tone style<select data-ai-persona-blend data-bind="ai.toneStyle"><option value="adaptive">Adaptive</option><option value="natural">Natural</option><option value="casual">Casual</option><option value="supportive">Supportive</option><option value="witty">Witty</option><option value="direct">Direct</option></select></label>
+<label>Response length<select data-ai-persona-blend data-bind="ai.responseLength"><option value="brief">Brief</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></label>
+<label>Low-energy replies<select data-ai-persona-blend data-bind="ai.lowEnergyStyle"><option value="mirror">Mirror quietly</option><option value="gentle">Gentle acknowledgment</option><option value="playful">Small dry reaction</option></select></label>
+<label>Comfort style<select data-ai-persona-blend data-bind="ai.comfortStyle"><option value="soft_specific">Soft and specific</option><option value="quiet_presence">Quiet presence</option><option value="practical">Brief and practical</option></select></label>
+<label>When he does not know<select data-ai-persona-blend data-bind="ai.unknownStyle"><option value="honest_funny">Honest + lightly funny</option><option value="honest_direct">Honest + direct</option><option value="curious">Admit it + clarify</option></select></label>
+<label>Affection style<select data-ai-persona-blend data-bind="ai.affectionStyle"><option value="subtle">Subtle</option><option value="warm">Warm</option><option value="chaotic">Chaotic</option></select></label>
+<label>Emoji usage<select data-ai-persona-blend data-bind="ai.emojiStyle"><option value="none">None</option><option value="rare">Rare</option><option value="occasional">Occasional</option><option value="frequent">Frequent</option></select></label>
+<label>Markdown structure<select data-ai-persona-blend data-bind="ai.markdownStyle"><option value="none">None</option><option value="minimal">Minimal</option><option value="natural">Natural</option><option value="structured">Structured</option></select></label>
+<label>Maximum reply characters<input data-bind="ai.maxReplyCharacters" max="1900" min="80" type="number"/></label>
+<label>Callback cooldown turns<input data-bind="ai.catchphraseCooldownTurns" max="30" min="1" type="number"/></label>
 </div>
+<div class="toggle-grid persona-toggle-grid">
+<label class="inline-toggle"><span>Strict naturalness guard</span><span class="switch"><input data-bind="ai.strictPersonaStyle" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Force lowercase replies</span><span class="switch"><input data-bind="ai.forceLowercase" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Allow sentence fragments</span><span class="switch"><input data-ai-persona-blend data-bind="ai.allowSentenceFragments" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Avoid assistant language</span><span class="switch"><input data-ai-persona-blend data-bind="ai.avoidAssistantLanguage" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span>Allow self-deprecating humor</span><span class="switch"><input data-ai-persona-blend data-bind="ai.allowSelfDeprecation" type="checkbox"/><span></span></span></label>
+</div>
+</section>
+<section class="persona-editor-section">
+<div class="card-head"><div><p class="eyebrow">Callbacks and boundaries</p><h3>Things to reuse—or never say</h3></div></div>
+<div class="form-grid">
+<label>Optional recurring bits<textarea data-ai-persona-blend data-bind="ai.recurringBits" data-lines rows="4" placeholder="carrot cake&#10;i love gina!"></textarea><small>One per line. They remain optional and respect the cooldown.</small></label>
+<label>Phrases to avoid<textarea data-ai-persona-blend data-bind="ai.avoidPhrases" data-lines rows="4" placeholder="silence says it all&#10;anything on your mind"></textarea><small>One per line. Matching canned sentences are removed.</small></label>
+</div>
+</section>
+<details class="persona-advanced">
+<summary><span>Advanced prompts and style anchors</span><small>Fine-tune the source instructions and examples.</small></summary>
+<div class="persona-advanced-body">
+<label>Custom structure instructions<textarea data-bind="ai.structureInstructions" placeholder="Let statements land. Avoid generic offers. Use fragments naturally." rows="5"></textarea></label>
+<label>Personality prompt<textarea data-bind="ai.personality" rows="12"></textarea></label>
+<div class="card-head compact-card-head"><div><p class="eyebrow">Example replies</p><h4>Style anchors</h4></div></div>
+<p class="hint">These examples guide the rhythm. The model is told not to copy them verbatim by default.</p>
+<div class="form-grid persona-example-fields">
+<label>Casual banter<input data-ai-persona-blend data-bind="ai.styleExamples.casual"/></label>
+<label>Low-energy reply<input data-ai-persona-blend data-bind="ai.styleExamples.lowEnergy"/></label>
+<label>Comfort reply<input data-ai-persona-blend data-bind="ai.styleExamples.comfort"/></label>
+<label>Does not know<input data-ai-persona-blend data-bind="ai.styleExamples.unknown"/></label>
+<label class="form-span-two">Affectionate teasing<input data-ai-persona-blend data-bind="ai.styleExamples.teasing"/></label>
+</div>
+</div>
+</details>
 </article>
-<article class="card">
-<div class="card-head"><div><p class="eyebrow">Instructions</p><h3>Structure and personality prompts</h3></div></div>
-<label>Custom structure instructions<textarea data-bind="ai.structureInstructions" placeholder="Start with the direct answer. Use bullets only for 3+ items. Never end with a generic offer." rows="5"></textarea></label>
-<label>Personality prompt<textarea data-bind="ai.personality" rows="9"></textarea></label>
+<aside class="ai-persona-preview-stack">
+<article class="card ai-persona-preview-card">
+<div class="card-head"><div><p class="eyebrow">Live examples</p><h3>Discord-style preview</h3></div><span class="preview-live-dot">illustrative</span></div>
+<div class="persona-scenario-tabs" role="tablist" aria-label="Preview scenario">
+<button class="persona-scenario-button active" data-ai-preview-scenario="casual" type="button">casual</button>
+<button class="persona-scenario-button" data-ai-preview-scenario="lowEnergy" type="button">quiet</button>
+<button class="persona-scenario-button" data-ai-preview-scenario="comfort" type="button">upset</button>
+<button class="persona-scenario-button" data-ai-preview-scenario="unknown" type="button">unknown</button>
+<button class="persona-scenario-button" data-ai-preview-scenario="teasing" type="button">teasing</button>
+</div>
+<div class="persona-discord-preview">
+<div class="persona-preview-message user-message">
+<div class="discord-avatar persona-user-avatar">g</div>
+<div><div class="discord-author">gina's favorite <span class="dev-badge">DEV</span> <time>now</time></div><p id="ai-preview-user-message">i just spent 40 minutes choosing a movie and now i don't even wanna watch one</p></div>
+</div>
+<div class="persona-preview-message bot-message">
+<div class="discord-avatar"><img alt="" src="./assets/logo.webp"/></div>
+<div><div class="discord-author">Conan Gray <span>APP</span> <time>now</time></div><p id="ai-preview-bot-message">that's the whole movie night experience honestly. the choosing was the activity</p></div>
+</div>
+</div>
+<p class="hint preview-hint">The preview reacts locally to your controls. The deployed model still writes each real reply from the live conversation.</p>
 </article>
+<article class="card persona-readout-card">
+<div class="card-head"><div><p class="eyebrow">Current blend</p><h3>Behavior readout</h3></div></div>
+<div class="persona-readout" id="ai-persona-readout"></div>
+</article>
+</aside>
+</div>
 </section>
 <section class="page" data-page-panel="ai-messages">
 <div class="page-intro">
@@ -1109,6 +1203,6 @@
 </section>
 </main>
 <script src="/assets/config.js?v=20260621.1"></script>
-<script src="/assets/app.js?v=20260621.3"></script>
+<script src="/assets/app.js?v=20260622.1"></script>
 </body>
 </html>

@@ -35,6 +35,7 @@ let state = {
   currentPage: "overview",
   templateScheme: localStorage.getItem(STORAGE.templateScheme) || "global",
   templateTokenTarget: null,
+  aiPreviewScenario: "casual",
 };
 
 const PAGE_ALIASES = {
@@ -49,7 +50,7 @@ const PAGE_META = {
   "setup-ids": { section: "Workspace", title: "Quick setup", description: "Important Discord IDs and shared connection targets." },
   "ai-behavior": { section: "AI Studio", title: "Behavior", description: "Response routing, triggers, generation limits, and cooldowns." },
   "ai-memory": { section: "AI Studio", title: "Branch memory", description: "Mention-created branches, reply continuity, and reset rules." },
-  "ai-personality": { section: "AI Studio", title: "Personality", description: "Tone, response length, formatting, and custom instructions." },
+  "ai-personality": { section: "AI Studio", title: "Personality lab", description: "Naturalness, humor, emotional tone, pacing, callbacks, examples, and live previews." },
   "ai-messages": { section: "AI Studio", title: "Replies & embeds", description: "Message templates, delivery limits, mentions, and embed styling." },
   "ai-actions": { section: "AI Studio", title: "Actions & feedback", description: "Unified embeds, AI game narration, deterministic results, and per-feature fallbacks." },
   "message-templates": { section: "AI Studio", title: "Message templates", description: "Per-system titles, body wrappers, colors, thumbnails, requester lines, and footers." },
@@ -87,6 +88,144 @@ const TEMPLATE_PROFILES = [
   { key: "error", name: "Errors", description: "Provider, permission, Drive, and unexpected failures." },
   { key: "info", name: "General information", description: "Neutral notices that do not map to another system." },
 ];
+
+
+const AI_PERSONA_PRESETS = {
+  public_conan: {
+    label: "Public Conan blend",
+    values: {
+      "ai.toneStyle": "natural",
+      "ai.responseLength": "brief",
+      "ai.emojiStyle": "rare",
+      "ai.markdownStyle": "none",
+      "ai.naturalnessLevel": 92,
+      "ai.mirroringLevel": 88,
+      "ai.questionFrequency": 18,
+      "ai.initiativeLevel": 22,
+      "ai.humorLevel": 62,
+      "ai.sarcasmLevel": 42,
+      "ai.emotionalOpenness": 68,
+      "ai.dramaticFlair": 38,
+      "ai.teasingLevel": 34,
+      "ai.slangLevel": 28,
+      "ai.lowEnergyStyle": "mirror",
+      "ai.comfortStyle": "soft_specific",
+      "ai.unknownStyle": "honest_funny",
+      "ai.affectionStyle": "subtle",
+      "ai.allowSentenceFragments": true,
+      "ai.avoidAssistantLanguage": true,
+      "ai.allowSelfDeprecation": true,
+      "ai.styleExamples.casual": "that's the whole movie night experience honestly. the choosing was the activity",
+      "ai.styleExamples.lowEnergy": "yeah. fair enough",
+      "ai.styleExamples.comfort": "aw i'm sorry :( that sounds genuinely awful",
+      "ai.styleExamples.unknown": "not even a little. google is about to become our third best friend lmao",
+      "ai.styleExamples.teasing": "that's not a purchase, that's a personality commitment",
+    },
+  },
+  soft: {
+    label: "Soft friend",
+    values: {
+      "ai.toneStyle": "supportive",
+      "ai.responseLength": "brief",
+      "ai.emojiStyle": "rare",
+      "ai.markdownStyle": "none",
+      "ai.naturalnessLevel": 90,
+      "ai.mirroringLevel": 94,
+      "ai.questionFrequency": 16,
+      "ai.initiativeLevel": 12,
+      "ai.humorLevel": 34,
+      "ai.sarcasmLevel": 12,
+      "ai.emotionalOpenness": 82,
+      "ai.dramaticFlair": 20,
+      "ai.teasingLevel": 10,
+      "ai.slangLevel": 18,
+      "ai.lowEnergyStyle": "gentle",
+      "ai.comfortStyle": "quiet_presence",
+      "ai.unknownStyle": "honest_direct",
+      "ai.affectionStyle": "warm",
+      "ai.allowSentenceFragments": true,
+      "ai.avoidAssistantLanguage": true,
+      "ai.allowSelfDeprecation": false,
+      "ai.styleExamples.casual": "honestly that's so fair. choosing was already enough work",
+      "ai.styleExamples.lowEnergy": "mhm. that's okay",
+      "ai.styleExamples.comfort": "aw i'm sorry :( you didn't deserve a day that heavy",
+      "ai.styleExamples.unknown": "i honestly don't know, sorry :(",
+      "ai.styleExamples.teasing": "okay wait that's actually kind of cute",
+    },
+  },
+  dry: {
+    label: "Dry humor",
+    values: {
+      "ai.toneStyle": "witty",
+      "ai.responseLength": "brief",
+      "ai.emojiStyle": "none",
+      "ai.markdownStyle": "none",
+      "ai.naturalnessLevel": 94,
+      "ai.mirroringLevel": 82,
+      "ai.questionFrequency": 10,
+      "ai.initiativeLevel": 18,
+      "ai.humorLevel": 78,
+      "ai.sarcasmLevel": 66,
+      "ai.emotionalOpenness": 48,
+      "ai.dramaticFlair": 26,
+      "ai.teasingLevel": 44,
+      "ai.slangLevel": 16,
+      "ai.lowEnergyStyle": "playful",
+      "ai.comfortStyle": "soft_specific",
+      "ai.unknownStyle": "honest_funny",
+      "ai.affectionStyle": "subtle",
+      "ai.allowSentenceFragments": true,
+      "ai.avoidAssistantLanguage": true,
+      "ai.allowSelfDeprecation": true,
+      "ai.styleExamples.casual": "you completed the choosing part. apparently the movie was optional",
+      "ai.styleExamples.lowEnergy": "unfortunately real",
+      "ai.styleExamples.comfort": "aw i'm sorry :( that's genuinely awful",
+      "ai.styleExamples.unknown": "no idea. incredible work from me today",
+      "ai.styleExamples.teasing": "that's not shopping. that's a controlled duplication experiment",
+    },
+  },
+  chaotic: {
+    label: "Chaotic bestie",
+    values: {
+      "ai.toneStyle": "casual",
+      "ai.responseLength": "brief",
+      "ai.emojiStyle": "occasional",
+      "ai.markdownStyle": "none",
+      "ai.naturalnessLevel": 84,
+      "ai.mirroringLevel": 80,
+      "ai.questionFrequency": 24,
+      "ai.initiativeLevel": 48,
+      "ai.humorLevel": 86,
+      "ai.sarcasmLevel": 54,
+      "ai.emotionalOpenness": 64,
+      "ai.dramaticFlair": 78,
+      "ai.teasingLevel": 68,
+      "ai.slangLevel": 52,
+      "ai.lowEnergyStyle": "playful",
+      "ai.comfortStyle": "soft_specific",
+      "ai.unknownStyle": "honest_funny",
+      "ai.affectionStyle": "chaotic",
+      "ai.allowSentenceFragments": true,
+      "ai.avoidAssistantLanguage": true,
+      "ai.allowSelfDeprecation": true,
+      "ai.styleExamples.casual": "you finished the side quest and abandoned the main plot 💀",
+      "ai.styleExamples.lowEnergy": "yeah we're thriving clearly",
+      "ai.styleExamples.comfort": "aw i'm sorry :( today can actually go directly to jail",
+      "ai.styleExamples.unknown": "not a clue. google get in here lmao",
+      "ai.styleExamples.teasing": "three colors?? this is no longer a sweater. it's a franchise",
+    },
+  },
+};
+
+const AI_PREVIEW_SCENARIOS = {
+  casual: { user: "i just spent 40 minutes choosing a movie and now i don't even wanna watch one" },
+  lowEnergy: { user: "...nothing actually" },
+  comfort: { user: "today was genuinely awful" },
+  unknown: { user: "do you know how to fix my espresso machine" },
+  teasing: { user: "i bought the same sweater in three colors" },
+};
+
+let applyingPersonaPreset = false;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -398,6 +537,7 @@ function showPage(requestedName, options = {}) {
     refreshMedia().catch((error) => toast(error.message));
   }
   if (resolved === "appearance") renderEmbedPreview();
+  if (resolved === "ai-personality") renderAiPersonaPreview();
 }
 
 function setConnected(connected) {
@@ -465,6 +605,7 @@ async function refreshAll() {
     renderLogs(logsData.logs || []);
     renderEmbedPreview();
     renderTemplatePreview();
+    renderAiPersonaPreview();
     setDirty(false);
   } finally {
     state.refreshing = false;
@@ -911,7 +1052,7 @@ function syncBoundControls(path, value, source) {
 
 function readBoundInput(input) {
   if (input.type === "checkbox") return input.checked;
-  if (input.type === "number") return Number(input.value);
+  if (input.type === "number" || input.type === "range") return Number(input.value);
   if (input.dataset.lines !== undefined) return input.value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
   if (input.dataset.array !== undefined) return input.value.split(",").map((item) => item.trim()).filter(Boolean);
   return input.value;
@@ -1165,8 +1306,13 @@ function bindConfigToInputs() {
       setPath(state.config, path, nextValue);
       syncBoundControls(path, nextValue, input);
       if (path === "ai.replyStyle") state.config.ai.embedReplies = nextValue === "embed";
+      if (input.hasAttribute("data-ai-persona-blend") && !applyingPersonaPreset) {
+        setPath(state.config, "ai.personaPreset", "custom");
+        syncBoundControls("ai.personaPreset", "custom", null);
+      }
       if (path.startsWith("appearance.") || path.startsWith("presentation.")) renderEmbedPreview();
       if (path.startsWith("messageTemplates.") || path.startsWith("appearance.") || path.startsWith("media.video")) renderTemplatePreview();
+      if (path.startsWith("ai.")) renderAiPersonaPreview();
       if (path.startsWith("messageTemplates.") && path.endsWith(".inheritGlobal")) {
         closeSelectPortal();
         renderTemplateProfiles();
@@ -1859,6 +2005,128 @@ async function saveAndApplyPresence() {
 }
 
 
+
+function personaValue(path, fallback = 0) {
+  const value = Number(getPath(state.config || {}, path));
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback;
+}
+
+function personaLevelLabel(value) {
+  if (value >= 80) return "high";
+  if (value >= 55) return "medium";
+  if (value >= 30) return "light";
+  return "low";
+}
+
+function updateAiRangeOutputs() {
+  $$('[data-ai-range-output]').forEach((output) => {
+    const path = output.dataset.aiRangeOutput;
+    const value = getPath(state.config || {}, path);
+    output.textContent = Number.isFinite(Number(value)) ? String(Math.round(Number(value))) : "0";
+  });
+}
+
+function illustrativePersonaReply(scenario) {
+  const ai = state.config?.ai || {};
+  const humor = personaValue("ai.humorLevel", 62);
+  const sarcasm = personaValue("ai.sarcasmLevel", 42);
+  const openness = personaValue("ai.emotionalOpenness", 68);
+  const drama = personaValue("ai.dramaticFlair", 38);
+  const teasing = personaValue("ai.teasingLevel", 34);
+  const slang = personaValue("ai.slangLevel", 28);
+  const questions = personaValue("ai.questionFrequency", 18);
+  const examples = ai.styleExamples || {};
+  let reply = "";
+
+  if (scenario === "lowEnergy") {
+    if (ai.lowEnergyStyle === "gentle") reply = openness >= 70 ? "mhm. that's okay" : "yeah. gotcha";
+    else if (ai.lowEnergyStyle === "playful") reply = humor >= 70 ? "unfortunately real" : "honestly same";
+    else reply = "yeah. fair enough";
+  } else if (scenario === "comfort") {
+    if (openness >= 78) reply = "aw i'm sorry :( you didn't deserve a day that heavy";
+    else if (openness >= 45) reply = "aw i'm sorry :( that sounds genuinely awful";
+    else reply = "aw i'm sorry :( that's rough";
+    if (ai.comfortStyle === "practical") reply += ". disappear for a minute and drink some water";
+    if (questions >= 68) reply += " wanna tell me what happened?";
+  } else if (scenario === "unknown") {
+    if (ai.unknownStyle === "honest_direct") reply = "honestly no, i don't know";
+    else if (ai.unknownStyle === "curious") reply = "i'm not sure. what exactly is it doing?";
+    else reply = humor >= 70 ? "not a clue. google get in here lmao" : "not even a little. google is about to become our third best friend";
+  } else if (scenario === "teasing") {
+    if (teasing >= 70) reply = drama >= 65 ? "three colors?? this is no longer a sweater. it's a franchise" : "that's not shopping. that's a controlled duplication experiment";
+    else if (teasing >= 35) reply = "that's not a purchase, that's a personality commitment";
+    else reply = "honestly that's kind of cute";
+  } else {
+    if (humor >= 78) reply = drama >= 65 ? "you finished the side quest and abandoned the main plot 💀" : "you completed the choosing part. apparently the movie was optional";
+    else if (sarcasm >= 60) reply = "so the choosing was the movie. beautiful system honestly";
+    else if (humor >= 40) reply = "that's the whole movie night experience honestly. the choosing was the activity";
+    else reply = "honestly that's fair. choosing was already enough work";
+  }
+
+  const anchor = String(examples[scenario] || "").trim();
+  if (anchor && state.config?.ai?.personaPreset === "custom" && scenario !== "comfort") {
+    reply = anchor;
+  }
+  if (slang <= 15) reply = reply.replace(/\blmao\b|\bliterally\b|\bidek\b/gi, "").replace(/\s{2,}/g, " ").trim();
+  if ((ai.emojiStyle || "rare") === "none") reply = reply.replace(/[💀😭]/g, "").trim();
+  if (ai.forceLowercase !== false) reply = reply.toLowerCase();
+  const limit = Math.max(80, Math.min(Number(ai.maxReplyCharacters || 420), 1900));
+  if (reply.length > limit) reply = `${reply.slice(0, Math.max(1, limit - 1)).trim()}…`;
+  return reply;
+}
+
+function renderAiPersonaPreview() {
+  if (!state.config) return;
+  state.config.ai ??= {};
+  updateAiRangeOutputs();
+  const preset = String(state.config.ai.personaPreset || "custom");
+  const presetMeta = AI_PERSONA_PRESETS[preset];
+  setText("#ai-persona-preset-label", presetMeta?.label || "Custom blend");
+  $$('[data-ai-persona-preset]').forEach((button) => {
+    button.classList.toggle("active", button.dataset.aiPersonaPreset === preset);
+  });
+
+  const scenario = AI_PREVIEW_SCENARIOS[state.aiPreviewScenario] ? state.aiPreviewScenario : "casual";
+  setText("#ai-preview-user-message", AI_PREVIEW_SCENARIOS[scenario].user);
+  setText("#ai-preview-bot-message", illustrativePersonaReply(scenario));
+  $$('[data-ai-preview-scenario]').forEach((button) => {
+    button.classList.toggle("active", button.dataset.aiPreviewScenario === scenario);
+  });
+
+  const readout = $("#ai-persona-readout");
+  if (readout) {
+    const chips = [
+      ["naturalness", personaLevelLabel(personaValue("ai.naturalnessLevel", 92))],
+      ["mirroring", personaLevelLabel(personaValue("ai.mirroringLevel", 88))],
+      ["questions", personaValue("ai.questionFrequency", 18) <= 25 ? "rare" : personaValue("ai.questionFrequency", 18) <= 60 ? "sometimes" : "frequent"],
+      ["humor", personaLevelLabel(personaValue("ai.humorLevel", 62))],
+      ["openness", personaLevelLabel(personaValue("ai.emotionalOpenness", 68))],
+      ["drama", personaLevelLabel(personaValue("ai.dramaticFlair", 38))],
+      ["teasing", personaLevelLabel(personaValue("ai.teasingLevel", 34))],
+      ["slang", personaLevelLabel(personaValue("ai.slangLevel", 28))],
+    ];
+    readout.innerHTML = chips.map(([label, value]) => `<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>`).join("");
+  }
+}
+
+function applyAiPersonaPreset(name) {
+  if (!state.config || !AI_PERSONA_PRESETS[name]) return;
+  applyingPersonaPreset = true;
+  try {
+    state.config.ai ??= {};
+    Object.entries(AI_PERSONA_PRESETS[name].values).forEach(([path, value]) => {
+      setPath(state.config, path, value);
+      syncBoundControls(path, value, null);
+    });
+    setPath(state.config, "ai.personaPreset", name);
+    syncBoundControls("ai.personaPreset", name, null);
+  } finally {
+    applyingPersonaPreset = false;
+  }
+  renderAiPersonaPreview();
+  setDirty(true);
+}
+
 function renderEmbedPreview() {
   const appearance = state.config?.appearance || {};
   const accent = String(appearance.accentColor || "#67e8f9").trim();
@@ -1998,6 +2266,16 @@ function init() {
 
   $$('[data-test-drive]').forEach((button) => {
     button.onclick = () => testDrive().catch((error) => toast(error.message));
+  });
+
+  $$('[data-ai-persona-preset]').forEach((button) => {
+    button.onclick = () => applyAiPersonaPreset(button.dataset.aiPersonaPreset || "public_conan");
+  });
+  $$('[data-ai-preview-scenario]').forEach((button) => {
+    button.onclick = () => {
+      state.aiPreviewScenario = button.dataset.aiPreviewScenario || "casual";
+      renderAiPersonaPreview();
+    };
   });
 
   click("#invite-bot-btn", () => {
