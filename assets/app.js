@@ -984,7 +984,10 @@ function templateProfileEditor(profile) {
     ${isGlobal ? "" : `
       <div class="template-inheritance-control">
         <div><strong>Use Global defaults</strong><span>Keep this scheme synchronized with the base profile.</span></div>
-        <span class="switch"><input data-bind="${path}.inheritGlobal" type="checkbox"><span></span></span>
+        <label class="switch template-inheritance-switch" title="Use Global defaults">
+          <input data-bind="${path}.inheritGlobal" type="checkbox" aria-label="Use Global defaults">
+          <span aria-hidden="true"></span>
+        </label>
       </div>
       ${inherited ? `<div class="template-inherited-notice">This scheme is currently previewing Global defaults. Turn inheritance off to customize it independently.</div>` : ""}
     `}
