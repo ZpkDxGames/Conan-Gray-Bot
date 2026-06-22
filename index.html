@@ -8,7 +8,7 @@
 <link href="./assets/logo.webp" rel="icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="shortcut icon" type="image/webp"/>
 <link href="./assets/logo.webp" rel="apple-touch-icon"/>
-<link href="/assets/styles.css?v=20260622.2" rel="stylesheet"/>
+<link href="/assets/styles.css?v=20260622.3" rel="stylesheet"/>
 </head>
 <body>
 <div class="aurora aurora-one"></div>
@@ -77,6 +77,7 @@
 <span>Discord</span><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/chevron-down.svg')"></span>
 </button>
 <div class="nav-group-items">
+<button class="nav-item" data-page="weather" title="Weather" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/weather.svg')"></span><span class="nav-label">Weather</span></button>
 <button class="nav-item" data-page="commands" title="Command setup" type="button"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span><span class="nav-label">Command setup</span></button>
 </div>
 </div>
@@ -767,6 +768,59 @@
 </div>
 <div class="stack" id="triggers-list"></div>
 </article>
+</section>
+<section class="page" data-page-panel="weather">
+<div class="page-intro">
+<div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/weather.svg')"></span></div>
+<div class="page-intro-copy">
+<p class="eyebrow">Discord</p>
+<h3>Weather</h3>
+<p class="muted">Answer natural weather questions and provide a dedicated slash command with location memory.</p>
+</div>
+<div class="page-intro-actions"><span class="hero-pill" id="weather-provider-pill">Checking OpenWeather…</span></div>
+</div>
+<div class="grid two">
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Feature controls</p><h3>When Conan checks the forecast</h3></div></div>
+<div class="stack compact-stack">
+<label class="inline-toggle"><span><strong>Enable weather</strong><small>Turns on both conversational weather lookups and <code>/weather</code>.</small></span><span class="switch"><input data-bind="weather.enabled" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span><strong>Detect weather questions in chat</strong><small>Runs only after Conan has been mentioned, called by name, or replied to.</small></span><span class="switch"><input data-bind="weather.aiDetectionEnabled" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span><strong>Allow personal saved locations</strong><small>Users can choose <code>remember:true</code> in the slash command.</small></span><span class="switch"><input data-bind="weather.allowUserSavedLocations" type="checkbox"/><span></span></span></label>
+<label class="inline-toggle"><span><strong>Show detailed conditions</strong><small>Adds humidity, wind, sun times, and the short forecast window.</small></span><span class="switch"><input data-bind="weather.showDetails" type="checkbox"/><span></span></span></label>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Location fallback</p><h3>What “here” means</h3></div></div>
+<div class="form-grid">
+<label class="form-span-two">Server default location<input data-bind="weather.defaultLocation" placeholder="Uberaba, MG, BR"/></label>
+<label>Temperature units<select data-bind="weather.units"><option value="auto">Automatic by country</option><option value="metric">Celsius</option><option value="imperial">Fahrenheit</option></select></label>
+<label>Response language<input data-bind="weather.language" maxlength="8" placeholder="en"/></label>
+<label>Forecast window<input data-bind="weather.forecastHours" max="48" min="3" step="3" type="number"/></label>
+</div>
+<div class="notice"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/info.svg')"></span><span>Location order: an explicit city/state/country in the message, then the user's saved location, then this server default. Discord does not expose a member's physical location, so Conan never guesses from the backend server's IP.</span></div>
+</article>
+</div>
+<div class="grid two weather-preview-grid">
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Conversation preview</p><h3>Natural chat lookup</h3></div><span class="hero-pill">Direct-call routing</span></div>
+<div class="weather-chat-preview">
+<div class="weather-preview-message user"><strong>gina's favorite</strong><span>conan what's the weather here?</span></div>
+<div class="weather-preview-message bot"><strong>Conan Gray <small>APP</small></strong><span id="weather-chat-preview-text">it's checking the forecast...</span><small>weather data © OpenWeather</small></div>
+</div>
+</article>
+<article class="card">
+<div class="card-head"><div><p class="eyebrow">Slash command preview</p><h3><code>/weather</code></h3></div><span class="hero-pill" id="weather-command-status-pill">Enabled</span></div>
+<div class="weather-command-example">
+<code>/weather location:London, GB units:Automatic remember:true</code>
+<p id="weather-command-preview-text">Uses the requested place, displays current conditions and the next 12 hours, then saves it for later.</p>
+</div>
+<div class="checklist">
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Accepts city, state, country, ZIP code, or latitude/longitude.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Conversational answers bypass the AI provider so temperatures and rain chances stay deterministic.</span></div>
+<div><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/check.svg')"></span><span>Visible OpenWeather attribution remains attached to every weather result.</span></div>
+</div>
+</article>
+</div>
 </section><section class="page" data-page-panel="commands">
 <div class="page-intro">
 <div class="page-intro-icon"><span aria-hidden="true" class="icon" style="--icon: url('/assets/icons/commands.svg')"></span></div>
@@ -1256,6 +1310,6 @@
 </section>
 </main>
 <script src="/assets/config.js?v=20260621.1"></script>
-<script src="/assets/app.js?v=20260622.2"></script>
+<script src="/assets/app.js?v=20260622.3"></script>
 </body>
 </html>

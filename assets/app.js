@@ -59,6 +59,7 @@ const PAGE_META = {
   "media-intake": { section: "Media", title: "Archive intake", description: "Attachment rules, filenames, privacy, and upload feedback." },
   "media-drive": { section: "Media", title: "Google Drive", description: "Destination folder, active Drive identity, and connection testing." },
   triggers: { section: "Media", title: "Triggers", description: "Map words to media URLs or random Drive selections." },
+  weather: { section: "Discord", title: "Weather", description: "OpenWeather-backed current conditions, forecasts, location matching, and personal defaults." },
   commands: { section: "Discord", title: "Command setup", description: "Control runtime availability and publish the exact Discord slash-command tree." },
   games: { section: "Games", title: "Game hub", description: "Global limits and links to every game configuration." },
   "game-tictactoe": { section: "Games", title: "Tic-tac-toe", description: "Board behavior, bot opponents, and result messages." },
@@ -604,6 +605,7 @@ async function refreshAll() {
     state.categories = discordData.categories || [];
 
     renderHealth();
+    renderWeatherPage();
     renderAdminStatus();
     renderCommandSyncNotice();
     renderChannelSelectors();
@@ -660,6 +662,39 @@ function renderHealth() {
   $("#bot-ready-pill").classList.toggle("ok", ready);
   $("#bot-ready-pill").classList.toggle("warn", connecting);
   $("#bot-ready-pill").classList.toggle("bad", crashed);
+}
+
+function renderWeatherPage() {
+  const config = state.config?.weather || {};
+  const health = state.health?.weather || {};
+  const providerPill = $("#weather-provider-pill");
+  if (providerPill) {
+    providerPill.textContent = health.configured ? "OpenWeather connected" : "OpenWeather key missing";
+    providerPill.classList.toggle("ok", Boolean(health.configured));
+    providerPill.classList.toggle("bad", !health.configured);
+  }
+
+  const commandEnabled = state.config?.commands?.weather !== false && config.enabled !== false;
+  const commandPill = $("#weather-command-status-pill");
+  if (commandPill) {
+    commandPill.textContent = commandEnabled ? "Enabled" : "Disabled";
+    commandPill.classList.toggle("ok", commandEnabled);
+    commandPill.classList.toggle("bad", !commandEnabled);
+  }
+
+  const location = String(config.defaultLocation || "your saved location").trim() || "your saved location";
+  const units = config.units === "imperial" ? "°F" : config.units === "metric" ? "°C" : "local units";
+  const hours = Math.max(3, Math.min(Number(config.forecastHours || 12), 48));
+  const chatPreview = $("#weather-chat-preview-text");
+  if (chatPreview) {
+    chatPreview.textContent = config.enabled === false
+      ? "weather is disabled rn"
+      : `it's showing current conditions for ${location} in ${units}, plus a ${hours}-hour rain check.`;
+  }
+  const commandPreview = $("#weather-command-preview-text");
+  if (commandPreview) {
+    commandPreview.textContent = `Uses the requested place, displays current conditions${config.showDetails === false ? "" : ", humidity, wind, sun times"}, and checks the next ${hours} hours${config.allowUserSavedLocations === false ? ". Personal saving is disabled." : ", then saves it when remember:true is selected."}`;
+  }
 }
 
 function renderAdminStatus() {
@@ -1390,6 +1425,7 @@ function bindConfigToInputs() {
       if (path.startsWith("appearance.") || path.startsWith("presentation.")) renderEmbedPreview();
       if (path.startsWith("messageTemplates.") || path.startsWith("appearance.") || path.startsWith("media.video")) renderTemplatePreview();
       if (path.startsWith("ai.")) renderAiPersonaPreview();
+      if (path.startsWith("weather.") || path === "commands.weather") renderWeatherPage();
       if (path.startsWith("messageTemplates.") && path.endsWith(".inheritGlobal")) {
         closeSelectPortal();
         renderTemplateProfiles();
@@ -1703,6 +1739,7 @@ function renderCommands() {
       state.config.commands[input.dataset.command] = input.checked;
       setDirty(true);
       renderCommands();
+      renderWeatherPage();
     };
   });
 
@@ -1726,6 +1763,7 @@ function setAllCommands(enabled) {
     state.config.commands[name] = Boolean(enabled);
   });
   renderCommands();
+  renderWeatherPage();
   setDirty(true);
 }
 

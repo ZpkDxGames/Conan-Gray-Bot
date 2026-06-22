@@ -3486,3 +3486,65 @@ body.reduce-motion *::after {
     grid-template-columns: 1fr;
   }
 }
+
+/* Weather management */
+.weather-preview-grid {
+  align-items: stretch;
+}
+
+.weather-chat-preview {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.18));
+  border-radius: 18px;
+  background: rgba(2, 8, 23, 0.46);
+}
+
+.weather-preview-message {
+  display: grid;
+  gap: 4px;
+  max-width: 92%;
+}
+
+.weather-preview-message strong {
+  color: var(--text, #f8fafc);
+  font-size: 0.9rem;
+}
+
+.weather-preview-message span {
+  width: fit-content;
+  padding: 10px 13px;
+  border-radius: 14px;
+  background: rgba(103, 232, 249, 0.1);
+  color: var(--text, #f8fafc);
+  line-height: 1.45;
+}
+
+.weather-preview-message.user {
+  justify-self: end;
+  text-align: right;
+}
+
+.weather-preview-message.user span {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.weather-preview-message.bot small {
+  color: var(--muted, #94a3b8);
+}
+
+.weather-command-example {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.18));
+  border-radius: 16px;
+  background: rgba(2, 8, 23, 0.38);
+}
+
+.weather-command-example code {
+  overflow-wrap: anywhere;
+  color: var(--accent, #67e8f9);
+}
